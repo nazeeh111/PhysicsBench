@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="Inspect three analytical mechanics experiments: projectile motion, a mass–spring oscillator and one-dimensional collision. Save and compare reproducible data locally.">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <title>
+      PhysicsBench · Mechanics
+    </title>
+    <link rel="icon" href="./mark.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <a class="skip" href="#experiment">
+      Skip to experiment
+    </a>
+    <header class="site-header">
+      <div class="identity">
+        <img src="./mark.svg" width="30" height="30" alt="">
+        <div>
+          <strong>
+            PhysicsBench
+          </strong>
+          <span>
+            Analytical mechanics
+          </span>
+        </div>
+      </div>
+      <div class="session-actions">
+        <button id="session-export" type="button">
+          Save session
+        </button>
+        <button id="session-import" type="button">
+          Open session
+        </button>
+        <input id="session-file" type="file" accept=".json,application/json" hidden>
+      </div>
+    </header>
+    <main>
+      <nav class="labs" aria-label="Experiment">
+        <button type="button" data-lab="projectile" aria-pressed="true">
+          01
+          <span>
+            Projectile
+          </span>
+        </button>
+        <button type="button" data-lab="oscillator" aria-pressed="false">
+          02
+          <span>
+            Mass–spring
+          </span>
+        </button>
+        <button type="button" data-lab="collision" aria-pressed="false">
+          03
+          <span>
+            Collision
+          </span>
+        </button>
+      </nav>
+      <section class="experiment-heading">
+        <div>
+          <p class="eyebrow">
+            Experiment
+          </p>
+          <h1 id="lab-name">
+            Projectile
+          </h1>
+          <p id="lab-subtitle">
+            Position under uniform gravity
+          </p>
+        </div>
+        <p id="model-window" class="window-label">
+        </p>
+      </section>
+      <div id="notice" class="notice" role="status" aria-live="polite">
+        Paused. Change the parameters or press Play.
+      </div>
+      <p id="error" class="error" role="alert" hidden>
+      </p>
+      <section class="instrument" id="experiment" tabindex="-1" aria-labelledby="lab-name">
+        <div class="visual">
+          <div class="panel-caption">
+            <h2>
+              Motion
+            </h2>
+            <span id="scene-note">
+            </span>
+          </div>
+          <svg id="scene" viewBox="0 0 720 300" role="img" aria-labelledby="scene-title scene-description">
+            <title id="scene-title">
+              Experiment scene
+            </title>
+            <desc id="scene-description">
+              The current physical state is listed below the scene.
+            </desc>
+          </svg>
+          <p id="scene-scale" class="small-note">
+          </p>
+          <div class="transport">
+            <button id="play" type="button">
+              Play
+            </button>
+            <button id="reset" type="button">
+              Reset time
+            </button>
+            <label class="speed-label">
+              Playback
+              <select id="rate">
+                <option value="0.25">
+                  ¼×
+                </option>
+                <option value="0.5">
+                  ½×
+                </option>
+                <option value="1" selected>
+                  1×
+                </option>
+                <option value="2">
+                  2×
+                </option>
+              </select>
+            </label>
+            <output id="time-output" for="time">
+              0 s
+            </output>
+          </div>
+          <label class="scrub-label" for="time">
+            Time
+            <span id="time-range">
+            </span>
+          </label>
+          <input id="time" type="range" min="0" max="1" step="any" value="0">
+          <p id="current-summary" class="current-summary">
+          </p>
+        </div>
+        <form id="parameters" novalidate aria-labelledby="parameters-heading">
+          <h2 id="parameters-heading">
+            Initial conditions
+          </h2>
+          <div id="parameter-fields">
+          </div>
+          <button class="apply" type="submit">
+            Apply
+            &amp;
+            reset
+          </button>
+          <p class="small-note">
+            Applying values pauses and resets time. Invalid values leave the last valid experiment intact.
+          </p>
+        </form>
+      </section>
+      <section class="measurements" aria-label="Current measurements">
+        <dl id="readings">
+        </dl>
+      </section>
+      <section class="plot-panel" aria-labelledby="plot-title">
+        <div class="panel-caption">
+          <h2 id="plot-title">
+            Height over time
+          </h2>
+          <div class="plot-legend">
+            <span class="legend current">
+              Current model
+            </span>
+            <span id="secondary-legend" class="legend secondary" hidden>
+              Body 2
+            </span>
+            <span id="comparison-legend" class="legend comparison" hidden>
+              Imported samples
+            </span>
+          </div>
+        </div>
+        <svg id="plot" viewBox="0 0 720 270" role="img" aria-labelledby="plot-accessible-title plot-accessible-description">
+          <title id="plot-accessible-title">
+            Time plot
+          </title>
+          <desc id="plot-accessible-description">
+            Exact model sampled over the viewing interval; a vertical line shows the selected time.
+          </desc>
+        </svg>
+        <div class="data-actions">
+          <button id="csv-export" type="button">
+            Export samples CSV
+          </button>
+          <button id="csv-import" type="button">
+            Compare samples CSV
+          </button>
+          <button id="clear-comparison" type="button" hidden>
+            Clear comparison
+          </button>
+          <input id="csv-file" type="file" accept=".csv,text/csv" hidden>
+        </div>
+        <p id="comparison-note" class="small-note">
+          CSV files contain reproducible PhysicsBench model samples, units and parameters. Import a file from this lab to compare; measured-data CSV is not supported.
+        </p>
+      </section>
+      <details class="sample-table">
+        <summary>
+          Inspect sample values
+        </summary>
+        <div class="table-scroll">
+          <table>
+            <caption id="sample-caption">
+              Eleven evenly spaced states from the current model
+            </caption>
+            <thead id="sample-head">
+            </thead>
+            <tbody id="sample-body">
+            </tbody>
+          </table>
+        </div>
+      </details>
+      <section class="model-notes">
+        <div>
+          <h2>
+            Equations
+          </h2>
+          <ul id="equations" class="equations">
+          </ul>
+        </div>
+        <div>
+          <h2>
+            Assumptions
+            &amp;
+            limits
+          </h2>
+          <ul id="assumptions">
+          </ul>
+          <p>
+            <a id="source-link" href="https://openstax.org/books/university-physics-volume-1/pages/4-3-projectile-motion" target="_blank" rel="noopener noreferrer">
+              Model reference
+            </a>
+          </p>
+        </div>
+      </section>
+      <footer>
+        Original implementation by Nazeeh. Analytical teaching models, not experimental validation. Everything stays in this browser; exports are local files.
+      </footer>
+    </main>
+    <script type="module" src="./app.js">
+    </script>
+  </body>
+</html>

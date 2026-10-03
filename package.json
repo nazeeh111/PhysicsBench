@@ -1,0 +1,16 @@
+{
+  "name": "physicsbench",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Three reproducible analytical mechanics experiments in the browser.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test models.test.js data.test.js",
+    "build": "node scripts/build.mjs",
+    "start": "node scripts/serve.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
