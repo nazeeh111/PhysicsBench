@@ -1,86 +1,111 @@
+<div align="center">
+
 # PhysicsBench
 
-PhysicsBench is an original browser instrument by Nazeeh for exploring three analytical mechanics models. Change initial conditions, pause or scrub exact time, inspect motion and measurements, and save reproducible experiments as local files.
+### Your laptop is a lab.
 
-- **Projectile:** uniform gravity, a flat ground plane and no air resistance. The trajectory uses equal horizontal and vertical spatial scales and stops at first ground contact. Terminal readings describe the instant before impact.
-- **Mass–spring:** an ideal frictionless horizontal oscillator with a linear, massless spring. Inspect four periods of displacement, velocity, force and energy exchange.
-- **Collision:** two bodies in one dimension with adjustable restitution. Momentum is conserved; restitution sets kinetic-energy loss. Contact is computed analytically rather than detected from animation frames.
+Explore a model. Inspect a signal. Make a case with data.
 
-The interface, diagrams, code and tests are original. No oPhysics source, artwork or applets are included. These are educational idealizations, not experimentally validated predictions of real objects.
+[Open the lab](https://nazeeh111.github.io/PhysicsBench/) · [A two-minute experiment](#a-two-minute-experiment) · [Methods](docs/METHODS.md) · [Research](docs/RESEARCH.md)
+
+**Vanilla JavaScript · No production dependencies · Local computation · MIT**
+
+</div>
+
+![PhysicsBench mechanics workbench, showing an analytical trajectory, editable conditions and live measurements](docs/images/mechanics-desktop.png)
+
+PhysicsBench is a browser science workbench built by Nazeeh Abdul-Hadi. It connects exact mechanics simulations, optional microphone analysis and calibrated video tracking to inspectable data analysis. Files are processed locally, and the application makes no data uploads. No account, dedicated GPU, phone or paid API is needed for the simulation and demonstration workflows.
+
+## Five instruments, one investigation
+
+| Instrument | What you can investigate |
+| --- | --- |
+| **Projectile motion** | Launch conditions, Earth/Moon/Mars gravity, exact trajectories, energy and parameter sweeps. |
+| **Mass & spring** | Position, velocity, restoring force, energy exchange and the square-root relationship between period and mass. |
+| **Collisions** | Momentum, restitution, kinetic-energy loss and contacts that occur beyond the viewing window. |
+| **Sound laboratory** | Waveform, Hann-window FFT spectrum, spectrogram, dominant frequency, relative signal level and clipping. Start with a silent synthesized signal or opt into microphone capture. |
+| **Motion & data** | Track points in a local video, calibrate a reference distance, import observations, fit a line or parabola and inspect residuals and coefficient intervals. |
+
+The useful connection is **Analyze this trajectory**: send a mechanics model directly into the same fitting tool used for local observations. Compare model choices, inspect what the residuals reveal and export the evidence. Simulation provenance remains visible, so an exact analytical curve cannot masquerade as a physical measurement.
+
+Instrument state survives navigation within the page. Switching instruments pauses mechanics and video, releases the microphone, and stops speaker output. Measurement history retains up to eight datasets with explicit removal and no automatic eviction. Reloading or closing the page clears the session; export important work first.
+
+## A two-minute experiment
+
+1. Open **Projectile motion**, choose **Maximum range**, and open **Parameter explorer**. Sweep launch angle from 0° to 90°. Under equal launch/landing height and no drag, the sampled maximum appears at 45°.
+2. Choose **Analyze this trajectory**. A quadratic recovers the model acceleration. Choose a linear fit and inspect its curved residuals. This demonstrates model mismatch using generated data, not a real gravity measurement.
+3. Open **Sound laboratory**, choose a two-tone signal and press **Run analysis**. Inspect the two spectral peaks. The display is silent unless you explicitly start the quiet reference tone.
+4. Open **Motion & data** and import [synthetic-projectile.csv](examples/synthetic-projectile.csv), or track a local video. Video values stay in source pixels until a known reference length is applied. Export observations and an analysis record.
+
+<details>
+<summary><strong>Sound and analysis screenshots</strong></summary>
+
+![Waveform, spectrum and spectrogram beside signal controls](docs/images/sound-desktop.png)
+
+![Position fitting with observations, residuals and uncertainty information](docs/images/analysis-desktop.png)
+
+</details>
 
 ## Run locally
 
-Use Node.js 22 or newer. There are no packages to install and no production dependencies.
+Use **Node.js 22 or newer**. The application and numerical tests require no package installation.
 
 ```sh
+git clone https://github.com/nazeeh111/PhysicsBench.git
+cd PhysicsBench
 npm test
 npm run build
 npm start
 ```
 
-Open `http://127.0.0.1:4173`. To choose another local port, use `npm start -- --port 4175`. The server serves only the fixed production files from `dist/` and listens only on this computer.
+Open **http://127.0.0.1:4173**. For another port: `npm start -- --port 4175`.
 
-The build copies the browser assets to `dist/` and records their SHA-256 hashes in `dist/manifest.json`. Deploy the contents of that directory to any static HTTP host. All application paths are relative, including JavaScript imports, so the same files work under a GitHub Pages project subpath. Direct `file://` module loading is not supported by browsers consistently. No hosting service or repository is provisioned by these commands.
+The build creates an explicit set of static assets in `dist/` with a deterministic SHA-256 manifest. The preview verifies those bytes before serving them, binds to loopback, and refuses arbitrary filesystem paths. Rebuild and restart after editing source. Deploy `dist/` to a static HTTPS host; relative paths support GitHub Pages project subpaths. Opening ES modules directly through `file://` is not supported.
 
-## Use the instrument
+## Compatibility and scientific limits
 
-Choose a lab, edit the labeled SI inputs, then select **Apply & reset**. Changes take effect together and reset time to zero. Invalid input leaves the previous experiment intact. Each lab remembers its last applied inputs until the page closes.
+| Capability | Requirement and boundary |
+| --- | --- |
+| Mechanics, synthesis, CSV analysis | A current desktop browser with JavaScript, Canvas 2D and SVG. No microphone/camera permission or special sensor required. |
+| Microphone | HTTPS or localhost, Web Audio, an available microphone, and browser/OS permission. Denial or unsupported capture leaves simulation available. No microphone monitoring through speakers. |
+| Sound level | RMS is **dBFS**, a digital level relative to full scale. It is **not calibrated dB SPL**. Dominant spectral frequency can be a harmonic rather than fundamental pitch. |
+| Local video | Browser-decodable video, up to 200 MiB, 30 minutes, 8.3 MP, 3840 pixels per side and 8:1 aspect ratio. Tracking is manual; seeking uses the browser-reported media time and is not guaranteed frame accurate. |
+| Physical video units | Known reference length in the plane of motion, fixed camera and suitable geometry. Calibration does not correct perspective, lens distortion, depth changes or camera shake. |
+| Fit uncertainty | Ordinary least squares with QR decomposition, centered/scaled time and 95% coefficient intervals. Intervals assume independent normal position errors with equal variance and exact time/scale. Calibration and timing errors are excluded. |
+| Portability evidence | Automated Chromium checks on macOS across 320–1440 px widths. Windows/Linux/ChromeOS and Firefox/Safari hardware runs have **not** been performed. |
 
-**Play**, **Pause**, **Reset time**, playback speed and the time slider share the same analytical state evaluator. The page starts paused and pauses when hidden. A delayed animation frame advances playback by at most 0.1 seconds before the speed factor, so a busy browser slows playback instead of making a large jump. Calculations do not depend on the frame rate. With the system's reduced-motion preference enabled, **Step** replaces continuous playback; the time slider remains available.
+Laptop accelerometers, magnetometers, barometers and force sensors are not assumed. “Laptop lab” describes a portable baseline with optional capabilities, not a guarantee about every laptop, browser or physical measurement. These are educational instruments, not calibrated metrology equipment.
 
-Native controls support keyboard operation and visible focus. Measurements and a sample table provide text alternatives to the scene and plot. Traces use solid, dashed and dotted patterns as well as color. Resizing changes only drawing geometry, not the physical state or selected time.
+Keyboard controls use native form elements and visible focus. **Ctrl/⌘ K** finds an instrument; **Escape** closes dialogs. Reduced motion replaces mechanics playback with single steps. Numeric readings, tables and exports accompany the visual plots.
 
-### Sessions and sample data
+## Files you can trust and inspect
 
-**Save session** downloads `physicsbench-session.json` with the active lab, unrounded parameters and selected time. **Open session** validates the complete file before restoring a paused experiment. Sessions are limited to 64 KiB of UTF-8 text. They use this exact versioned shape:
+- **Mechanics JSON:** versioned, bounded experiment sessions; existing v1 files remain supported.
+- **Mechanics CSV:** validated model replay, with SI units and assumptions. Its strict format is separate from arbitrary measured observations.
+- **Audio JSON:** a bounded exact sample-window replay, including source and acquisition information where available. It is not a continuous recording. CSV exports the same window.
+- **Observation CSV:** two numeric columns, time in seconds and value; optional header `time_s,value`. Units are supplied explicitly. See the [example](examples/synthetic-projectile.csv).
+- **Analysis JSON:** observations, provenance, fit window, coefficients, intervals, residuals and calibration metadata. Export-only; use the CSV and recorded settings to reconstruct an analysis. Video files themselves are not embedded.
 
-```json
-{
-  "format": "physicsbench",
-  "version": 1,
-  "lab": "projectile",
-  "params": { "speed": 15, "angle": 45, "height": 1.5, "gravity": 9.81 },
-  "time": 0
-}
+See [methods and file limits](docs/METHODS.md) and the [original mechanics format contract](docs/MECHANICS.md).
+
+## Engineering and evidence
+
+The app separates pure scientific computation from browser acquisition and rendering:
+
+```text
+models.js ── analytical mechanics ── app.js ───────┐
+sweep.js ─── parameter studies ───────────────────┤
+audio-dsp.js ── FFT / synthesis ── audio.js ───────┼── bench.js / index.html
+analysis.js ── QR regression ──── measure.js ─────┤   instrument navigation
+data.js ───── bounded model interchange ─────────┘   and preserved workspaces
 ```
 
-**Export samples CSV** downloads up to 201 states on an evenly spaced time grid over the complete viewing interval, including both endpoints. Times that round to the same floating-point value are emitted only once; ordinary viewing intervals retain all 201 states. A zero-duration projectile produces one state. The CSV starts with six comment lines containing JSON values for `format`, `version`, `lab`, `params`, `units` and `assumptions`, followed by the exact column names and finite numeric rows.
+Tests cover conservation laws, independent numerical oracles, signal fixtures, regression uncertainty, file validation and distribution boundaries. Browser checks exercise actual controls, downloads and local-video calibration; microphone lifecycle checks use simulated hardware. **Actual microphone accuracy and cross-device scientific validation are untested.** Exact passed checks and reproduction commands are in [VERIFICATION.md](docs/VERIFICATION.md).
 
-**Compare samples CSV** accepts this PhysicsBench model format from the active lab and overlays the primary plotted quantity as a dotted trace. Parameters may differ from the current experiment. Importing or clearing a comparison does not replace current conditions or time. This is a reproducible model replay format, not a measured-data CSV importer. Comparison parameters are listed below the plot. Collision comparison shows body 1 velocity; the dashed body 2 curve belongs to the current model.
+Research considered twelve relevant precedents, including phyphox, PhET, Tracker, CircuitJS, CODAP, JupyterLite and Chrome Music Lab. [The research record](docs/RESEARCH.md) explains what transfers and what does not. The interface, analytical implementation and illustrations are original; no third-party app artwork or applets are redistributed. Combining established techniques is not a claim of scientific novelty or a measured tenfold improvement.
 
-CSV imports are limited to 512 KiB and 2,001 rows. They require matching columns, SI units and assumptions, increasing unique times within the declared model interval, and values agreeing with that model within `1e-9 + 1e-8 × |expected|`. Partial intervals are accepted. Quoted cells, formulas, arbitrary extra metadata, duplicate properties, unknown fields and unsupported versions are rejected. Failed imports retain the previous experiment and comparison. File handling uses local browser APIs; no file data is uploaded. State is kept in memory until the page closes, so save a session to keep it.
+## Project and contribution
 
-## Models and bounds
+Issues and focused pull requests are welcome. Include the input data, browser/version, expected behavior and reproducible steps. See [CONTRIBUTING.md](CONTRIBUTING.md), [security reporting](SECURITY.md) and [release notes](CHANGELOG.md).
 
-All internal quantities use SI units. Positive x points right; positive y points up. Inputs have bounded ranges to keep the instrument useful and numbers finite.
-
-| Lab | Inputs and accepted bounds |
-| --- | --- |
-| Projectile | Speed 0–100 m/s; angle −90–90°; initial height 0–100 m; gravity 0.1–30 m/s² |
-| Mass–spring | Mass 0.1–20 kg; stiffness 0.1–200 N/m; displacement −5–5 m; velocity −10–10 m/s |
-| Collision | Each mass 0.1–20 kg; each incoming velocity −10–10 m/s; restitution 0–1; initial surface gap 0–20 m |
-
-The projectile solves `x = v₀ cos(θ)t` and `y = h + v₀ sin(θ)t − gt²/2`. A stable quadratic root avoids cancellation for downward launches. A projectile already at ground level with no upward velocity has zero-duration flight. Mechanical energy per unit mass is `v²/2 + gy`.
-
-The spring solves `x = x₀ cos(ωt) + (v₀/ω) sin(ωt)`, where `ω = √(k/m)`. Force is `−kx`; total energy is `mv²/2 + kx²/2`. The displayed block and spring shape are illustrative and do not model spring failure or contact.
-
-Collision bodies have a fixed 1 m width for the contact convention; width is independent of mass. Initially their centres are `0` and `gap + 1`. If `u₁ > u₂`, contact time is `gap/(u₁ − u₂)`. Outgoing velocities solve momentum conservation together with `v₂ − v₁ = e(u₁ − u₂)`, and apply at `t ≥ contact time`. Otherwise there is no future collision. There are no walls, rotations, deformation dynamics or repeated impacts. The viewing window is 8 seconds without a future collision; otherwise it is twice the contact time, bounded to 4–20 seconds. The UI distinguishes contact beyond the window from no future contact.
-
-The equations follow standard mechanics described in these teaching references. Source prose, exercises and illustrations are not redistributed:
-
-- [OpenStax University Physics, Projectile Motion](https://openstax.org/books/university-physics-volume-1/pages/4-3-projectile-motion)
-- [OpenStax University Physics, Simple Harmonic Motion](https://openstax.org/books/university-physics-volume-1/pages/15-1-simple-harmonic-motion)
-- [OpenStax College Physics, Elastic Collisions in One Dimension](https://openstax.org/books/college-physics-2e/pages/8-4-elastic-collisions-in-one-dimension)
-- [OpenStax College Physics, Inelastic Collisions in One Dimension](https://openstax.org/books/college-physics-2e/pages/8-5-inelastic-collisions-in-one-dimension)
-
-## Verification and project structure
-
-`npm test` runs Node's built-in test runner. Model tests use hand-computable fixtures, conservation identities, an independent acceleration-driven velocity-Verlet reference, a small Runge–Kutta reference for the oscillator with a convergence check, and a two-equation linear solver for collision velocities. These reference solvers are test-only. File-format tests cover round trips, domain boundaries, size limits, malicious or malformed values, duplicate keys and failed-import preservation. This evidence checks the specified models, not universal correctness or agreement with the physical world. Rendering and real file-picker/download interactions require a browser check separately.
-
-- `models.js`: pure validation, analytical state evaluation and sampling.
-- `data.js`: bounded session and sample formats.
-- `app.js`: controls, playback and original SVG drawings.
-- `index.html`, `styles.css`, `mark.svg`: accessible document, layout and original mark.
-- `scripts/`: dependency-free build and local static server.
-
-The original implementation and artwork are available under the [MIT license](LICENSE).
+Built by **[Nazeeh Abdul-Hadi](https://github.com/nazeeh111)**. [MIT license](LICENSE).

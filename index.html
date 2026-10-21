@@ -1,244 +1,433 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="description" content="Inspect three analytical mechanics experiments: projectile motion, a mass–spring oscillator and one-dimensional collision. Save and compare reproducible data locally.">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
-    <title>
-      PhysicsBench · Mechanics
-    </title>
-    <link rel="icon" href="./mark.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="./styles.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="A browser science workbench. Explore mechanics, inspect sound, track local video and fit experimental data. No account, no upload, no paid API."
+    />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; media-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>PhysicsBench · Your laptop is a lab</title>
+    <link rel="icon" href="./mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <a class="skip" href="#experiment">
-      Skip to experiment
-    </a>
-    <header class="site-header">
-      <div class="identity">
-        <img src="./mark.svg" width="30" height="30" alt="">
+    <a class="skip" href="#main-content"> Skip to experiment </a>
+    <aside class="sidebar">
+      <a class="identity" href="#projectile" aria-label="PhysicsBench home"
+        ><img src="./mark.svg" width="36" height="36" alt="" />
         <div>
-          <strong>
-            PhysicsBench
-          </strong>
-          <span>
-            Analytical mechanics
-          </span>
-        </div>
-      </div>
-      <div class="session-actions">
-        <button id="session-export" type="button">
-          Save session
+          <strong>PhysicsBench<span class="brand-dot">.</span></strong
+          ><span>The browser science lab</span>
+        </div></a
+      >
+      <button id="search-open" class="search-launch" type="button">
+        <span>Find an instrument</span><kbd>⌘ K</kbd>
+      </button>
+      <nav aria-label="Instruments" class="instrument-nav">
+        <p class="nav-label">SIMULATE <span>03</span></p>
+        <button
+          data-mode="mechanics"
+          data-lab="projectile"
+          aria-pressed="true"
+          type="button"
+        >
+          <span class="nav-symbol">↗</span
+          ><span>Projectile motion<small>Launch. Observe. Compare.</small></span
+          ><span class="nav-index">01</span>
         </button>
-        <button id="session-import" type="button">
-          Open session
+        <button
+          data-mode="mechanics"
+          data-lab="oscillator"
+          aria-pressed="false"
+          type="button"
+        >
+          <span class="nav-symbol">∿</span
+          ><span>Mass &amp; spring<small>Energy in motion.</small></span
+          ><span class="nav-index">02</span>
         </button>
-        <input id="session-file" type="file" accept=".json,application/json" hidden>
-      </div>
-    </header>
-    <main>
-      <nav class="labs" aria-label="Experiment">
-        <button type="button" data-lab="projectile" aria-pressed="true">
-          01
-          <span>
-            Projectile
-          </span>
+        <button
+          data-mode="mechanics"
+          data-lab="collision"
+          aria-pressed="false"
+          type="button"
+        >
+          <span class="nav-symbol">⇄</span
+          ><span>Collisions<small>Momentum meets impact.</small></span
+          ><span class="nav-index">03</span>
         </button>
-        <button type="button" data-lab="oscillator" aria-pressed="false">
-          02
-          <span>
-            Mass–spring
-          </span>
+        <p class="nav-label">MEASURE &amp; ANALYZE <span>02</span></p>
+        <button data-mode="audio" aria-pressed="false" type="button">
+          <span class="nav-symbol">≋</span
+          ><span
+            >Sound laboratory<small>Waveform. Spectrum. Signal.</small></span
+          ><span class="nav-index">04</span>
         </button>
-        <button type="button" data-lab="collision" aria-pressed="false">
-          03
-          <span>
-            Collision
-          </span>
+        <button data-mode="measure" aria-pressed="false" type="button">
+          <span class="nav-symbol">⌖</span
+          ><span>Motion &amp; data<small>Track. Fit. Question.</small></span
+          ><span class="nav-index">05</span>
         </button>
       </nav>
-      <section class="experiment-heading">
-        <div>
-          <p class="eyebrow">
-            Experiment
-          </p>
-          <h1 id="lab-name">
-            Projectile
-          </h1>
-          <p id="lab-subtitle">
-            Position under uniform gravity
-          </p>
+      <div class="sidebar-bottom">
+        <div class="local-badge">
+          <span class="status-dot"></span> Local by design
         </div>
-        <p id="model-window" class="window-label">
-        </p>
-      </section>
-      <div id="notice" class="notice" role="status" aria-live="polite">
-        Paused. Change the parameters or press Play.
+        <p>Your files and signals stay<br />in your browser.</p>
+        <button id="guide-open" type="button">
+          Field guide <span>↗</span></button
+        ><a
+          href="https://github.com/nazeeh111/PhysicsBench"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Source &amp; methods <span>↗</span></a
+        >
+        <div class="build-label">PHYSICSBENCH / 0.2</div>
       </div>
-      <p id="error" class="error" role="alert" hidden>
-      </p>
-      <section class="instrument" id="experiment" tabindex="-1" aria-labelledby="lab-name">
-        <div class="visual">
-          <div class="panel-caption">
-            <h2>
-              Motion
-            </h2>
-            <span id="scene-note">
-            </span>
-          </div>
-          <svg id="scene" viewBox="0 0 720 300" role="img" aria-labelledby="scene-title scene-description">
-            <title id="scene-title">
-              Experiment scene
-            </title>
-            <desc id="scene-description">
-              The current physical state is listed below the scene.
-            </desc>
-          </svg>
-          <p id="scene-scale" class="small-note">
-          </p>
-          <div class="transport">
-            <button id="play" type="button">
-              Play
-            </button>
-            <button id="reset" type="button">
-              Reset time
-            </button>
-            <label class="speed-label">
-              Playback
-              <select id="rate">
-                <option value="0.25">
-                  ¼×
-                </option>
-                <option value="0.5">
-                  ½×
-                </option>
-                <option value="1" selected>
-                  1×
-                </option>
-                <option value="2">
-                  2×
-                </option>
-              </select>
-            </label>
-            <output id="time-output" for="time">
-              0 s
-            </output>
-          </div>
-          <label class="scrub-label" for="time">
-            Time
-            <span id="time-range">
-            </span>
-          </label>
-          <input id="time" type="range" min="0" max="1" step="any" value="0">
-          <p id="current-summary" class="current-summary">
-          </p>
+    </aside>
+    <div class="app-shell">
+      <header class="site-header">
+        <div class="breadcrumb">
+          WORKBENCH <span>/</span>
+          <strong id="breadcrumb-current">Mechanics</strong>
         </div>
-        <form id="parameters" novalidate aria-labelledby="parameters-heading">
-          <h2 id="parameters-heading">
-            Initial conditions
-          </h2>
-          <div id="parameter-fields">
-          </div>
-          <button class="apply" type="submit">
-            Apply
-            &amp;
-            reset
+        <div class="header-actions">
+          <span class="offline-label"
+            ><span class="status-dot"></span>No account needed</span
+          ><button id="help-open" type="button" aria-label="Open field guide">
+            ?
           </button>
-          <p class="small-note">
-            Applying values pauses and resets time. Invalid values leave the last valid experiment intact.
-          </p>
-        </form>
-      </section>
-      <section class="measurements" aria-label="Current measurements">
-        <dl id="readings">
-        </dl>
-      </section>
-      <section class="plot-panel" aria-labelledby="plot-title">
-        <div class="panel-caption">
-          <h2 id="plot-title">
-            Height over time
-          </h2>
-          <div class="plot-legend">
-            <span class="legend current">
-              Current model
-            </span>
-            <span id="secondary-legend" class="legend secondary" hidden>
-              Body 2
-            </span>
-            <span id="comparison-legend" class="legend comparison" hidden>
-              Imported samples
-            </span>
+        </div>
+      </header>
+      <main id="main-content" tabindex="-1">
+        <div class="workspace-intro">
+          <p class="eyebrow">A LITTLE CURIOSITY. A WHOLE LAB.</p>
+          <div class="workspace-title-row">
+            <h1>Your laptop is a lab<span>.</span></h1>
+            <span class="suite-label">SIMULATE / MEASURE / UNDERSTAND</span>
           </div>
+          <p>Change a condition. Find a pattern. Make the evidence yours.</p>
         </div>
-        <svg id="plot" viewBox="0 0 720 270" role="img" aria-labelledby="plot-accessible-title plot-accessible-description">
-          <title id="plot-accessible-title">
-            Time plot
-          </title>
-          <desc id="plot-accessible-description">
-            Exact model sampled over the viewing interval; a vertical line shows the selected time.
-          </desc>
-        </svg>
-        <div class="data-actions">
-          <button id="csv-export" type="button">
-            Export samples CSV
-          </button>
-          <button id="csv-import" type="button">
-            Compare samples CSV
-          </button>
-          <button id="clear-comparison" type="button" hidden>
-            Clear comparison
-          </button>
-          <input id="csv-file" type="file" accept=".csv,text/csv" hidden>
-        </div>
-        <p id="comparison-note" class="small-note">
-          CSV files contain reproducible PhysicsBench model samples, units and parameters. Import a file from this lab to compare; measured-data CSV is not supported.
-        </p>
-      </section>
-      <details class="sample-table">
-        <summary>
-          Inspect sample values
-        </summary>
-        <div class="table-scroll">
-          <table>
-            <caption id="sample-caption">
-              Eleven evenly spaced states from the current model
-            </caption>
-            <thead id="sample-head">
-            </thead>
-            <tbody id="sample-body">
-            </tbody>
-          </table>
-        </div>
-      </details>
-      <section class="model-notes">
-        <div>
-          <h2>
-            Equations
-          </h2>
-          <ul id="equations" class="equations">
-          </ul>
-        </div>
-        <div>
-          <h2>
-            Assumptions
-            &amp;
-            limits
-          </h2>
-          <ul id="assumptions">
-          </ul>
+        <section id="mechanics-workspace">
+          <section class="experiment-heading">
+            <div>
+              <p class="eyebrow">MECHANICS / ANALYTICAL MODEL</p>
+              <h2 id="lab-name">Projectile</h2>
+              <p id="lab-subtitle">Position under uniform gravity</p>
+            </div>
+            <p id="model-window" class="window-label"></p>
+          </section>
+          <div class="experiment-toolbar">
+            <div
+              id="preset-buttons"
+              class="preset-buttons"
+              aria-label="Experiment presets"
+            ></div>
+            <div class="session-actions">
+              <button id="session-export" type="button">Save session</button
+              ><button id="session-import" type="button">Open session</button
+              ><input
+                id="session-file"
+                type="file"
+                accept=".json,application/json"
+                hidden
+              />
+            </div>
+          </div>
+          <div id="notice" class="notice" role="status" aria-live="polite">
+            Paused. Change the parameters or press Play.
+          </div>
+          <p id="error" class="error" role="alert" hidden></p>
+          <section
+            class="instrument"
+            id="experiment"
+            tabindex="-1"
+            aria-labelledby="lab-name"
+          >
+            <div class="visual">
+              <div class="panel-caption">
+                <h2>Motion</h2>
+                <span id="scene-note"> </span>
+              </div>
+              <svg
+                id="scene"
+                viewBox="0 0 720 300"
+                role="img"
+                aria-labelledby="scene-title scene-description"
+              >
+                <title id="scene-title">Experiment scene</title>
+                <desc id="scene-description">
+                  The current physical state is listed below the scene.
+                </desc>
+              </svg>
+              <p id="scene-scale" class="small-note"></p>
+              <div class="transport">
+                <button id="play" type="button">Play</button>
+                <button id="reset" type="button">Reset time</button>
+                <label class="speed-label">
+                  Playback
+                  <select id="rate">
+                    <option value="0.25">¼×</option>
+                    <option value="0.5">½×</option>
+                    <option value="1" selected>1×</option>
+                    <option value="2">2×</option>
+                  </select>
+                </label>
+                <output id="time-output" for="time"> 0 s </output>
+              </div>
+              <label class="scrub-label" for="time">
+                Time
+                <span id="time-range"> </span>
+              </label>
+              <input
+                id="time"
+                type="range"
+                min="0"
+                max="1"
+                step="any"
+                value="0"
+              />
+              <p id="current-summary" class="current-summary"></p>
+            </div>
+            <form
+              id="parameters"
+              novalidate
+              aria-labelledby="parameters-heading"
+            >
+              <div class="panel-caption">
+                <h2 id="parameters-heading">Initial conditions</h2>
+                <span>SI UNITS</span>
+              </div>
+              <div id="parameter-fields"></div>
+              <button class="apply" type="submit">Apply &amp; reset</button>
+              <p class="small-note">
+                Applying values pauses and resets time. Invalid values leave the
+                last valid experiment intact.
+              </p>
+            </form>
+          </section>
+          <section class="measurements" aria-label="Current measurements">
+            <dl id="readings"></dl>
+          </section>
+          <section class="plot-panel panel" aria-labelledby="plot-title">
+            <div class="panel-caption">
+              <h2 id="plot-title">Height over time</h2>
+              <label class="quantity-label" for="plot-quantity"
+                >Plot
+                <select id="plot-quantity"></select
+              ></label>
+              <div class="plot-legend">
+                <span class="legend current"> Current model </span>
+                <span id="secondary-legend" class="legend secondary" hidden>
+                  Body 2
+                </span>
+                <span id="comparison-legend" class="legend comparison" hidden>
+                  Imported samples
+                </span>
+              </div>
+            </div>
+            <svg
+              id="plot"
+              viewBox="0 0 720 270"
+              role="img"
+              aria-labelledby="plot-accessible-title plot-accessible-description"
+            >
+              <title id="plot-accessible-title">Time plot</title>
+              <desc id="plot-accessible-description">
+                Exact model sampled over the viewing interval; a vertical line
+                shows the selected time.
+              </desc>
+            </svg>
+            <div class="data-actions">
+              <button id="send-analysis" type="button">
+                Analyze this trajectory ↗</button
+              ><button id="sweep-toggle" type="button" aria-expanded="false">
+                Parameter explorer
+              </button>
+              <button id="csv-export" type="button">Export samples CSV</button>
+              <button id="csv-import" type="button">Compare samples CSV</button>
+              <button id="clear-comparison" type="button" hidden>
+                Clear comparison
+              </button>
+              <input id="csv-file" type="file" accept=".csv,text/csv" hidden />
+            </div>
+            <p id="comparison-note" class="small-note">
+              CSV files contain reproducible PhysicsBench model samples, units
+              and parameters. Import a file from this lab to compare;
+              measured-data CSV is not supported.
+            </p>
+          </section>
+          <section
+            id="sweep-panel"
+            class="panel sweep-panel"
+            hidden
+            aria-labelledby="sweep-heading"
+          >
+            <div class="panel-caption">
+              <h2 id="sweep-heading">Parameter explorer</h2>
+              <span>ONE CHANGE, 41 EXPERIMENTS</span>
+            </div>
+            <p class="small-note">
+              Sweep one condition while keeping the others fixed. Predictions
+              use the same analytical model.
+            </p>
+            <div class="toolbar">
+              <label for="sweep-parameter">Vary</label
+              ><select id="sweep-parameter"></select
+              ><label for="sweep-min">From</label
+              ><input id="sweep-min" type="number" step="any" /><label
+                for="sweep-max"
+                >To</label
+              ><input id="sweep-max" type="number" step="any" /><button
+                id="sweep-run"
+                type="button"
+                class="primary"
+              >
+                Run sweep</button
+              ><button id="sweep-export" type="button" disabled>
+                Export sweep CSV
+              </button>
+            </div>
+            <p id="sweep-error" class="error" role="alert" hidden></p>
+            <svg
+              id="sweep-chart"
+              viewBox="0 0 720 270"
+              role="img"
+              aria-label="Parameter sweep results"
+            ></svg>
+            <p id="sweep-summary" class="small-note" role="status">
+              Choose a parameter and run a sweep.
+            </p>
+          </section>
+          <details class="sample-table">
+            <summary>Inspect sample values</summary>
+            <div class="table-scroll">
+              <table>
+                <caption id="sample-caption">
+                  Eleven evenly spaced states from the current model
+                </caption>
+                <thead id="sample-head"></thead>
+                <tbody id="sample-body"></tbody>
+              </table>
+            </div>
+          </details>
+          <section class="model-notes">
+            <div>
+              <h2>Equations</h2>
+              <ul id="equations" class="equations"></ul>
+            </div>
+            <div>
+              <h2>Assumptions &amp; limits</h2>
+              <ul id="assumptions"></ul>
+              <p>
+                <a
+                  id="source-link"
+                  href="https://openstax.org/books/university-physics-volume-1/pages/4-3-projectile-motion"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Model reference
+                </a>
+              </p>
+            </div>
+          </section>
+        </section>
+        <section
+          id="extra-workspace"
+          hidden
+          aria-label="Measurement workspace"
+        ></section>
+        <footer>
+          <span>Built for the curious. Made by Nazeeh.</span
+          ><span>Local computation · Open source · No account</span>
+        </footer>
+      </main>
+    </div>
+    <dialog id="guide-dialog" aria-labelledby="guide-title">
+      <div class="dialog-top">
+        <p class="eyebrow">THE FIELD GUIDE</p>
+        <button
+          type="button"
+          data-close="guide-dialog"
+          aria-label="Close guide"
+        >
+          ×
+        </button>
+      </div>
+      <h2 id="guide-title">Start with a question.</h2>
+      <p>Five instruments. Three ways to investigate.</p>
+      <div class="guide-grid">
+        <article>
+          <h3>01 / Simulate</h3>
           <p>
-            <a id="source-link" href="https://openstax.org/books/university-physics-volume-1/pages/4-3-projectile-motion" target="_blank" rel="noopener noreferrer">
-              Model reference
-            </a>
+            Pick a mechanics lab, try a preset, or change the SI inputs and
+            apply. Scrub exact time, explore a parameter sweep, then send the
+            trajectory to analysis. Model assumptions are below each experiment.
           </p>
-        </div>
-      </section>
-      <footer>
-        Original implementation by Nazeeh. Analytical teaching models, not experimental validation. Everything stays in this browser; exports are local files.
-      </footer>
-    </main>
-    <script type="module" src="./app.js">
-    </script>
+        </article>
+        <article>
+          <h3>02 / Measure</h3>
+          <p>
+            Sound laboratory starts with a silent synthetic signal. Enable your
+            microphone only when ready. Motion &amp; data accepts a local video
+            for manual point tracking or a two-column time,value CSV.
+          </p>
+        </article>
+        <article>
+          <h3>03 / Make a case</h3>
+          <p>
+            Fit a line or parabola, inspect residuals, and export evidence. A
+            good fit alone does not validate a physical model. Video needs a
+            known length and a suitable camera angle before reporting metres.
+          </p>
+        </article>
+      </div>
+      <h3>Your machine, your data.</h3>
+      <p>
+        No accounts, uploads, analytics, AI services or external fonts.
+        Simulations and demos need no hardware permission. Microphone capture
+        needs HTTPS or localhost, a supported browser, available hardware and
+        your permission. Local-video formats depend on your browser codecs.
+      </p>
+      <p>
+        Use a current Chrome, Edge, Firefox or Safari browser on Windows, macOS,
+        Linux or ChromeOS. No dedicated GPU required. Phone-only sensors such as
+        magnetometers are not assumed. Actual sound level in dB SPL is not
+        available without calibration.
+      </p>
+      <p class="small-note">
+        Use Tab to reach controls, Enter to activate, Escape to close this guide
+        and Ctrl/⌘ K to find an instrument. Reduced motion replaces mechanics
+        playback with single steps.
+      </p>
+    </dialog>
+    <dialog id="search-dialog" aria-labelledby="search-title">
+      <div class="dialog-top">
+        <h2 id="search-title">Find an instrument</h2>
+        <button
+          type="button"
+          data-close="search-dialog"
+          aria-label="Close instrument search"
+        >
+          ×
+        </button>
+      </div>
+      <label class="sr-only" for="instrument-search">Search instruments</label
+      ><input
+        id="instrument-search"
+        type="search"
+        placeholder="Try sound, gravity, collision…"
+        autocomplete="off"
+      />
+      <div id="search-results"></div>
+      <p class="small-note">
+        Tab to a result, Enter to open. Escape to return.
+      </p>
+    </dialog>
+    <script type="module" src="./bench.js"></script>
   </body>
 </html>

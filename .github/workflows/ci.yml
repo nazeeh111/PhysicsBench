@@ -27,6 +27,18 @@ jobs:
           package-manager-cache: false
       - run: npm test
       - run: npm run build
+      - name: Install isolated browser test tooling
+        if: matrix.node == 24
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts playwright@1.62.1
+          npx --no-install playwright install --with-deps chromium
+      - name: Check integrated browser workflows
+        if: matrix.node == 24
+        run: |
+          npm start > "$RUNNER_TEMP/physicsbench-preview.log" 2>&1 &
+          physicsbench_preview_pid=$!
+          trap 'kill "$physicsbench_preview_pid"' EXIT
+          npm run test:browser
   build-site:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: check

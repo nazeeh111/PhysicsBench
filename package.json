@@ -1,14 +1,15 @@
 {
   "name": "physicsbench",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Three reproducible analytical mechanics experiments in the browser.",
+  "description": "A local-first browser science workbench: mechanics, sound, video tracking and reproducible data analysis.",
   "license": "MIT",
   "scripts": {
-    "test": "node --test models.test.js data.test.js",
+    "test": "node --test *.test.js",
     "build": "node scripts/build.mjs",
-    "start": "node scripts/serve.mjs"
+    "start": "node scripts/serve.mjs",
+    "test:browser": "node scripts/browser-check.mjs"
   },
   "engines": {
     "node": ">=22"
