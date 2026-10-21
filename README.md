@@ -72,7 +72,7 @@ The build creates an explicit set of static assets in `dist/` with a determinist
 | Local video | Browser-decodable video, up to 200 MiB, 30 minutes, 8.3 MP, 3840 pixels per side and 8:1 aspect ratio. Tracking is manual; seeking uses the browser-reported media time and is not guaranteed frame accurate. |
 | Physical video units | Known reference length in the plane of motion, fixed camera and suitable geometry. Calibration does not correct perspective, lens distortion, depth changes or camera shake. |
 | Fit uncertainty | Ordinary least squares with QR decomposition, centered/scaled time and 95% coefficient intervals. Intervals assume independent normal position errors with equal variance and exact time/scale. Calibration and timing errors are excluded. |
-| Portability evidence | Automated Chromium checks on macOS across 320–1440 px widths. Windows/Linux/ChromeOS and Firefox/Safari hardware runs have **not** been performed. |
+| Portability evidence | Automated Chromium checks on macOS and Ubuntu CI across 320–1440 px widths. Windows/ChromeOS, Firefox/Safari and physical microphone accuracy runs have **not** been performed. |
 
 Laptop accelerometers, magnetometers, barometers and force sensors are not assumed. “Laptop lab” describes a portable baseline with optional capabilities, not a guarantee about every laptop, browser or physical measurement. These are educational instruments, not calibrated metrology equipment.
 

@@ -40,10 +40,14 @@ If an installed Playwright module should be reused, set `PLAYWRIGHT_MODULE` to i
 
 The existing GitHub workflow runs numerical tests/build on Node 22 and 24; its Node 24 check now installs isolated Playwright tooling and runs the browser suite before Pages publishing is eligible. Local checks do not by themselves prove a GitHub run passed; inspect the pull request's current checks for that status.
 
+## Confirmed GitHub run
+
+[Run 39693305964](https://github.com/nazeeh111/PhysicsBench/actions/runs/39693305964) passed on runtime source commit `925288b716aecd9246d502e6cebc8b9d149e009b`: all 54 tests and the 13-asset build on Node 22 and 24, plus the complete Chromium 151.0.7922.34 browser suite on Ubuntu. The log confirms real MP4 decoding, manual calibration/metadata export, preserved navigation and mocked microphone lifecycle checks executed successfully. Pages build/deploy jobs were skipped because this is an unmerged pull request. This documentation update adds the observed CI result without changing runtime source.
+
 ## Not established
 
 - Real microphone capture accuracy, acoustic calibration, or scientific agreement with a laboratory reference.
-- Firefox/WebKit execution or Windows/Linux/ChromeOS device/browser runs. Those engines were not installed in the local test environment. The interfaces use standard browser APIs, with capability fallbacks, but portability across those systems remains unverified.
+- Firefox/WebKit execution, Windows/ChromeOS browser runs or physical device accuracy. Firefox/WebKit were not installed locally. Ubuntu headless Chromium is covered by the GitHub run above; that does not establish every Linux distribution, browser or hardware setup.
 - Guaranteed frame-accurate video decoding, automatic object tracking, or correction for camera perspective/motion.
 - Full assistive-technology conformance, an exhaustive security audit, or a measured tenfold improvement.
 - Persistence across reload/close. Export important work; page memory and session history are deliberately temporary.
