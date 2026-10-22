@@ -64,7 +64,7 @@ Or reuse an installed Playwright module via `PLAYWRIGHT_MODULE=/absolute/path/to
 
 `npm run benchmark` measured about 37 ms warmed median at 48 kHz on the current Node/macOS host in one local run. Browser messaging, hashing/encoding, worker startup and other devices are excluded; rerun rather than treating this as a portable performance guarantee.
 
-GitHub's Node 22/24 and Ubuntu Chromium checks are configured in the workflow. Inspect the PR's current checks for the final revision; the prior v0.2 successful run does not validate this new code.
+[GitHub run 39700454515](https://github.com/nazeeh111/PhysicsBench/actions/runs/39700454515) passed on investigation source commit `0cf653a7d9be34b7444bb5ae4fe74c94ebb27f6b`: Node 22 and 24 tests/build, plus the complete Ubuntu Chromium integration suite on Node 24. Its log confirms 89 passing tests, the 21-asset build and the same offline AudioWorklet results above. Pages build/deployment were skipped on the PR, as intended. Later documentation-only revisions do not change that tested runtime; inspect the PR's current checks for its latest head.
 
 ## Unverified limits
 
