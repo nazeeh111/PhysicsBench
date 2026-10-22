@@ -10,6 +10,14 @@ PhysicsBench runs complete scientific investigations locally in the browser: rec
 
 ![Acoustic investigation: recovered response, independent prediction and its error against a simpler baseline](docs/images/v3/acoustic-investigation.png)
 
+## Mechanics you can verify
+
+The original projectile, mass–spring and collision labs remain available alongside the new investigations. For a concrete collision check, set restitution to `0.4`, select **Apply & reset**, and scrub to `1.8 s`: contact occurs at `1.333 s`, the outgoing velocities are `1.6` and `2.8 m/s`, momentum stays at `6 kg·m/s`, and kinetic energy falls from `9` to `6.48 J`.
+
+[![The collision lab paused at 1.8 seconds with the restitution input and momentum and energy readings visible](docs/collision-after-contact.png)](https://nazeeh111.github.io/PhysicsBench/)
+
+*Browser capture of that experiment; the velocity trace continues below the captured area.*
+
 ## Two investigations with consequences
 
 ### Can one sound predict another?
