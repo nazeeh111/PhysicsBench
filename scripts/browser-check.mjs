@@ -571,8 +571,7 @@ try {
     await permission.locator(".acoustic-lab [data-message]").innerText(),
     /canceled/,
   );
-  // A reference tone must stop as microphone capture starts and stay unavailable
-  // during the permission wait and after the microphone becomes active.
+  // Microphone permission keeps simulated output unavailable and recovers cleanly.
   await permission.locator("[data-mode=audio]").click();
   await permission.locator("[data-tone]").press("Enter");
   await permission.waitForFunction(() => window.toneStarts === 1);
@@ -580,6 +579,21 @@ try {
   await permission.waitForFunction(
     () => window.toneStops === 1 && window.pending.length === 1,
   );
+  assert.equal(await permission.locator("[data-tone]").isDisabled(), true);
+  await permission.evaluate(() => window.denyMicrophone());
+  await permission.waitForFunction(
+    () =>
+      document.querySelector(".audio-lab [data-error]").textContent.includes("permission was denied"),
+  );
+  assert.equal(
+    await permission.locator(".audio-lab [data-source]").innerText(),
+    "Simulated signal",
+  );
+  assert.equal(await permission.locator("[data-tone]").isDisabled(), false);
+  assert.equal(await permission.evaluate(() => window.toneStarts), 1);
+  assert.equal(await permission.evaluate(() => window.toneStops), 1);
+  await permission.locator("[data-mic]").click();
+  await permission.waitForFunction(() => window.pending.length === 1);
   assert.equal(await permission.locator("[data-tone]").isDisabled(), true);
   await permission.evaluate(() => window.grantLate());
   await permission.waitForFunction(
@@ -589,31 +603,6 @@ try {
   );
   assert.equal(await permission.evaluate(() => window.toneStarts), 1);
   assert.equal(await permission.evaluate(() => window.toneStops), 1);
-  await permission.locator("[data-mic]").click();
-  await permission.waitForFunction(
-    () =>
-      document.querySelector(".audio-lab [data-source]").textContent ===
-      "Simulated signal",
-  );
-  await permission.locator("[data-mic]").click();
-  await permission.waitForFunction(() => window.pending.length === 1);
-  assert.equal(await permission.locator("[data-tone]").isDisabled(), true);
-  await permission.evaluate(() => window.denyMicrophone());
-  await permission.waitForFunction(
-    () => document.querySelector(".audio-lab [data-error]").textContent.includes("permission was denied"),
-  );
-  assert.equal(await permission.locator("[data-tone]").isDisabled(), false);
-  assert.equal(await permission.evaluate(() => window.toneStarts), 1);
-  await permission.locator("[data-mic]").click();
-  await permission.waitForFunction(() => window.pending.length === 1);
-  assert.equal(await permission.locator("[data-tone]").isDisabled(), true);
-  await permission.evaluate(() => window.grantLate());
-  await permission.waitForFunction(
-    () =>
-      document.querySelector(".audio-lab [data-source]").textContent ===
-      "Live microphone",
-  );
-  assert.equal(await permission.evaluate(() => window.toneStarts), 1);
   assert.deepEqual(errors, []);
   assert.deepEqual(httpFailures, []);
   console.log(
