@@ -227,6 +227,123 @@ try {
     await page.locator(".motion-result-strip").innerText(),
     /25 \/ 25/,
   );
+  // Rejecting a replacement must not detach the still-valid track from its source.
+  await page.locator('[data-mode="measure"]').click();
+  const measurement = page.locator(".measurement-layout"),
+    videoPanel = measurement
+      .locator("details")
+      .filter({ hasText: "Track an object in a local video" });
+  await videoPanel.locator("summary").click();
+  await measurement
+    .getByLabel("Local video")
+    .setInputFiles("test-fixtures/tracking-portrait.webm");
+  await page.waitForFunction(() => {
+    const video = document.querySelector(".measurement-layout video");
+    return video?.videoWidth > 0 && video.readyState >= 2 && !video.seeking;
+  });
+  const trackingCanvas = measurement.locator("canvas.measurement-canvas"),
+    canvasGeometry = await trackingCanvas.evaluate((canvas) => {
+      const bounds = canvas.getBoundingClientRect(),
+        ratio = canvas.width / canvas.height,
+        renderedWidth = Math.min(bounds.width, bounds.height * ratio),
+        renderedHeight = Math.min(bounds.height, bounds.width / ratio);
+      return {
+        renderedWidth,
+        renderedHeight,
+        offsetX: (bounds.width - renderedWidth) / 2,
+        offsetY: (bounds.height - renderedHeight) / 2,
+        sourceWidth: document.querySelector(".measurement-layout video").videoWidth,
+        sourceHeight: document.querySelector(".measurement-layout video").videoHeight,
+      };
+    }),
+    videoStatus = videoPanel.locator('p[role="status"]');
+  await trackingCanvas.click({
+    position: {
+      x: canvasGeometry.offsetX + canvasGeometry.renderedWidth * 0.25,
+      y: canvasGeometry.offsetY + canvasGeometry.renderedHeight * 0.5,
+    },
+  });
+  const recorded = (await videoStatus.innerText()).match(
+    /\(([^,]+), ([^)]+)\) source px/,
+  );
+  assert.ok(recorded, await videoStatus.innerText());
+  assert.ok(Math.abs(Number(recorded[1]) - canvasGeometry.sourceWidth * 0.25) < 2);
+  assert.ok(Math.abs(Number(recorded[2]) - canvasGeometry.sourceHeight * 0.5) < 2);
+  await trackingCanvas.click({
+    position: { x: canvasGeometry.offsetX / 2, y: canvasGeometry.renderedHeight / 2 },
+  });
+  assert.match(await videoStatus.innerText(), /Click inside the displayed video frame/);
+  assert.match(await measurement.innerText(), /1 tracked points/);
+  await videoPanel
+    .getByRole("button", { name: "Clear tracking", exact: true })
+    .click();
+  const seekTime = measurement.getByLabel("Seek time (s)"),
+    seek = measurement.getByRole("button", { name: "Seek", exact: true }),
+    x = measurement.getByLabel("X (source px)"),
+    y = measurement.getByLabel("Y (source px, down)"),
+    record = measurement.getByRole("button", {
+      name: "Record coordinate",
+      exact: true,
+    });
+  for (const [time, px, py] of [
+    [0.2, 100, 200],
+    [0.6, 110, 190],
+    [1.0, 120, 160],
+    [1.4, 130, 110],
+  ]) {
+    await seekTime.fill(String(time));
+    await seek.click();
+    await page.waitForFunction(
+      (target) => {
+        const video = document.querySelector(".measurement-layout video");
+        return (
+          video?.readyState >= 2 &&
+          !video.seeking &&
+          Math.abs(video.currentTime - target) < 0.05
+        );
+      },
+      time,
+    );
+    await x.fill(String(px));
+    await y.fill(String(py));
+    await record.click();
+  }
+  assert.match(await measurement.innerText(), /4 tracked points/);
+  async function exportMeasure() {
+    const downloadPromise = page.waitForEvent("download");
+    await measurement
+      .getByRole("button", { name: "Export analysis JSON", exact: true })
+      .click();
+    const download = await downloadPromise;
+    return JSON.parse(await readFile(await download.path(), "utf8"));
+  }
+  const originalTrack = await exportMeasure();
+  assert.equal(originalTrack.dataset.name, "tracking-portrait.webm");
+  assert.ok(originalTrack.dataset.video.width > 0);
+  await measurement
+    .getByLabel("Local video")
+    .evaluate((input) => {
+      const rejected = new File([], "oversized-replacement.mp4", {
+        type: "video/mp4",
+      });
+      Object.defineProperty(rejected, "size", {
+        value: 200 * 1024 * 1024 + 1,
+      });
+      const transfer = new DataTransfer();
+      transfer.items.add(rejected);
+      input.files = transfer.files;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  await page.waitForFunction(() =>
+    document
+      .querySelector(".measurement-layout")
+      ?.textContent.includes("Use a video at most 200 MiB"),
+  );
+  await measurement.getByRole("button", { name: "Use pixels", exact: true }).click();
+  const afterRejectedReplacement = await exportMeasure();
+  assert.deepEqual(afterRejectedReplacement.dataset, originalTrack.dataset);
+  await page.locator('[data-mode="motion"]').click();
+  console.log("PASS: an oversized replacement preserves the existing video track");
   // Local video decodes and uses the frame actually presented, not requested seek time.
   await page
     .locator(".motion-lab [data-video-file]")

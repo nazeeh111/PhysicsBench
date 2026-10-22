@@ -26,7 +26,8 @@ export function mountMeasure(container, initialDataset) {
     calibrationClicks = [],
     calibrationPick = false,
     videoReady = false,
-    videoSession = 0;
+    videoSession = 0,
+    activeVideoFile = null;
   const datasetHistory = [];
   let historySequence = 0,
     currentHistoryKey = null;
@@ -679,7 +680,7 @@ export function mountMeasure(container, initialDataset) {
                 (activeScale?.metersPerPixel ?? 1),
             })),
             unit: activeScale ? "m" : "px",
-            name: videoFile.files?.[0]?.name ?? "Local video",
+            name: activeVideoFile?.name ?? "Local video",
             source: "video",
             provenance:
               "Manually tracked local video. Vertical position increases upward from image bottom. Tracking and calibration errors are not included in fit intervals.",
@@ -737,6 +738,14 @@ export function mountMeasure(container, initialDataset) {
     updateTracking();
   }
   on(videoFile, "change", () => {
+    const file = videoFile.files?.[0];
+    if (!file) return;
+    if (file.size > 200 * 1024 * 1024) {
+      videoFile.value = "";
+      videoStatus.textContent =
+        "Use a video at most 200 MiB. The current video and analysis are unchanged.";
+      return;
+    }
     videoSession++;
     videoReady = false;
     video.pause();
@@ -744,19 +753,13 @@ export function mountMeasure(container, initialDataset) {
     video.load();
     if (videoURL) URL.revokeObjectURL(videoURL);
     videoURL = null;
-    const file = videoFile.files?.[0];
-    if (!file) return;
-    if (file.size > 200 * 1024 * 1024) {
-      videoStatus.textContent =
-        "Use a video at most 200 MiB. Previous valid analysis retained.";
-      return;
-    }
     videoPoints = [];
     activeScale = null;
     calibrationClicks = [];
     calibrationPick = false;
     knownDistance.value = "";
     referencePixels.value = "";
+    activeVideoFile = file;
     videoURL = URL.createObjectURL(file);
     video.src = videoURL;
     videoStatus.textContent = "Loading local video…";
@@ -835,8 +838,27 @@ export function mountMeasure(container, initialDataset) {
     if (!videoReady || video.seeking || video.readyState < 2) return;
     video.pause();
     const bounds = trackingCanvas.getBoundingClientRect();
-    const x = ((event.clientX - bounds.left) / bounds.width) * video.videoWidth,
-      y = ((event.clientY - bounds.top) / bounds.height) * video.videoHeight;
+    const scale = Math.min(
+        bounds.width / trackingCanvas.width,
+        bounds.height / trackingCanvas.height,
+      ),
+      imageWidth = trackingCanvas.width * scale,
+      imageHeight = trackingCanvas.height * scale,
+      imageLeft = bounds.left + (bounds.width - imageWidth) / 2,
+      imageTop = bounds.top + (bounds.height - imageHeight) / 2,
+      imageX = event.clientX - imageLeft,
+      imageY = event.clientY - imageTop;
+    if (
+      imageX < 0 ||
+      imageX > imageWidth ||
+      imageY < 0 ||
+      imageY > imageHeight
+    ) {
+      videoStatus.textContent = "Click inside the displayed video frame.";
+      return;
+    }
+    const x = (imageX / imageWidth) * video.videoWidth,
+      y = (imageY / imageHeight) * video.videoHeight;
     pixelX.value = number(x, 8);
     pixelY.value = number(y, 8);
     if (calibrationPick) {

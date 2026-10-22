@@ -26,6 +26,7 @@ The committed browser runner serves the freshly verified distribution on an ephe
 - Straight-line model mismatch approximately 1.28 m versus ballistic mismatch 0.00803 m for that generated specimen. These are training-fit errors, not held-out motion prediction.
 - Occlusion stops tracking with a gap. Linked chart/time controls, point exclusion and undo preserve observations.
 - Actual local MP4 decode, presented-media timestamps and source attachment.
+- Portrait-video canvas clicks map through the visible image (not its letterbox), and a rejected oversized replacement leaves the exported file identity, dimensions and track unchanged.
 - Retained mechanics presets/sweeps/model-to-data handoff, reduced-motion stepping and methods dialog.
 - No document horizontal overflow at 320, 390, 768, 1024 and 1280 px; desktop inspection at 1536 px. Scientific chart labels redraw at display size on resize, including high-density displays; chart selection retains the correct time coordinates. Current screenshots are under `docs/images/v3/`.
 - Real AudioWorklet execution in an OfflineAudioContext, using a controlled digital reflection path: full-model normalized prediction error about **0.00111 (0.11%)**, versus **0.3712 (37.1%)** for a trained delay-and-gain baseline. 55,200 samples retained; no missing inputs/render discontinuities. This exercises actual processor execution without microphone or speaker hardware.
