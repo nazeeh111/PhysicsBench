@@ -10,6 +10,20 @@ const TYPES = new Map([
   ["index.html", "text/html; charset=utf-8"],
   ["styles.css", "text/css; charset=utf-8"],
   ["app.js", "text/javascript; charset=utf-8"],
+  ["bench.js", "text/javascript; charset=utf-8"],
+  ["acoustics.js", "text/javascript; charset=utf-8"],
+  ["acoustic-lab.js", "text/javascript; charset=utf-8"],
+  ["acoustic-worker.js", "text/javascript; charset=utf-8"],
+  ["acquisition.js", "text/javascript; charset=utf-8"],
+  ["capture-worklet.js", "text/javascript; charset=utf-8"],
+  ["experiment.js", "text/javascript; charset=utf-8"],
+  ["motion-lab.js", "text/javascript; charset=utf-8"],
+  ["tracking.js", "text/javascript; charset=utf-8"],
+  ["sweep.js", "text/javascript; charset=utf-8"],
+  ["audio.js", "text/javascript; charset=utf-8"],
+  ["audio-dsp.js", "text/javascript; charset=utf-8"],
+  ["measure.js", "text/javascript; charset=utf-8"],
+  ["analysis.js", "text/javascript; charset=utf-8"],
   ["models.js", "text/javascript; charset=utf-8"],
   ["data.js", "text/javascript; charset=utf-8"],
   ["mark.svg", "image/svg+xml"],
@@ -17,11 +31,15 @@ const TYPES = new Map([
 ]);
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const CSP =
-  "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+  "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; media-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 
 export function parsePort(args) {
   if (args.length === 0) return 4173;
-  if (args.length !== 2 || args[0] !== "--port" || !/^[1-9]\d{0,4}$/.test(args[1])) {
+  if (
+    args.length !== 2 ||
+    args[0] !== "--port" ||
+    !/^[1-9]\d{0,4}$/.test(args[1])
+  ) {
     throw new Error("Usage: node scripts/serve.mjs [--port 1–65535]");
   }
   const port = Number(args[1]);
@@ -35,7 +53,8 @@ async function readRegular(path) {
     throw new Error(`Expected a regular built file: ${path}`);
   const file = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
   try {
-    if (!(await file.stat()).isFile()) throw new Error(`Expected a regular built file: ${path}`);
+    if (!(await file.stat()).isFile())
+      throw new Error(`Expected a regular built file: ${path}`);
     return await file.readFile();
   } finally {
     await file.close();
@@ -45,13 +64,17 @@ async function readRegular(path) {
 export async function loadAssets(directory = join(ROOT, "dist")) {
   const info = await lstat(directory);
   if (!info.isDirectory() || info.isSymbolicLink())
-    throw new Error("dist must be a regular directory. Run npm run build first.");
+    throw new Error(
+      "dist must be a regular directory. Run npm run build first.",
+    );
   const names = await readdir(directory);
   if (
     names.length !== TYPES.size + 1 ||
     names.some((name) => !TYPES.has(name) && name !== "manifest.json")
   ) {
-    throw new Error("dist has missing or unexpected files. Run npm run build first.");
+    throw new Error(
+      "dist has missing or unexpected files. Run npm run build first.",
+    );
   }
   const manifest = JSON.parse(
     (await readRegular(join(directory, "manifest.json"))).toString("utf8"),
@@ -84,7 +107,9 @@ export async function loadAssets(directory = join(ROOT, "dist")) {
     const record = records.get(name);
     const sha256 = createHash("sha256").update(bytes).digest("hex");
     if (bytes.length !== record.bytes || sha256 !== record.sha256)
-      throw new Error(`Built file differs from its manifest: ${name}. Run npm run build again.`);
+      throw new Error(
+        `Built file differs from its manifest: ${name}. Run npm run build again.`,
+      );
     assets.set(name, { bytes, type });
   }
   return assets;
@@ -109,7 +134,12 @@ export function createHandler(assets) {
       response.end(request.method === "HEAD" ? undefined : bytes);
     }
     function error(status, message, extra) {
-      send(status, Buffer.from(`${message}\n`), "text/plain; charset=utf-8", extra);
+      send(
+        status,
+        Buffer.from(`${message}\n`),
+        "text/plain; charset=utf-8",
+        extra,
+      );
     }
     if (request.method !== "GET" && request.method !== "HEAD") {
       error(405, "Method not allowed", { Allow: "GET, HEAD" });
@@ -149,11 +179,16 @@ async function main() {
   });
   server.listen(port, "127.0.0.1", () => {
     console.log(`PhysicsBench preview: http://127.0.0.1:${port}`);
-    console.log("Serving the verified build. Rebuild and restart to preview source changes.");
+    console.log(
+      "Serving the verified build. Rebuild and restart to preview source changes.",
+    );
   });
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(resolve(process.argv[1])).href
+) {
   try {
     await main();
   } catch (error) {
