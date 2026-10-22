@@ -14,9 +14,13 @@ PhysicsBench runs complete scientific investigations locally in the browser: rec
 
 The original projectile, mass–spring and collision labs remain available alongside the new investigations. For a concrete collision check, set restitution to `0.4`, select **Apply & reset**, and scrub to `1.8 s`: contact occurs at `1.333 s`, the outgoing velocities are `1.6` and `2.8 m/s`, momentum stays at `6 kg·m/s`, and kinetic energy falls from `9` to `6.48 J`.
 
-[![The collision lab paused at 1.8 seconds with the restitution input and momentum and energy readings visible](docs/collision-after-contact.png)](https://nazeeh111.github.io/PhysicsBench/)
+[![The collision lab paused at 1.8 seconds, showing the two bodies, the 0.4 restitution input, a contact mark on the time slider, and momentum and energy readings.](docs/collision-after-contact-v2.png)](https://nazeeh111.github.io/PhysicsBench/)
 
-*Browser capture of that experiment; the velocity trace continues below the captured area.*
+*Current-source browser capture of that experiment. The blue and magenta marks identify body 1 and body 2 across the scene, readings and plot.*
+
+[![Velocity over time for the same collision. A magenta dashed line marks contact at 1.333 seconds and a dark solid line marks the selected 1.8-second state.](docs/collision-time-trace.png)](https://nazeeh111.github.io/PhysicsBench/)
+
+*The two velocity traces change at contact. The separate cursor shows which instant the scene and measurements display.*
 
 ## Two investigations with consequences
 
