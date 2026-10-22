@@ -95,6 +95,7 @@ function install(nextLab, nextParams, nextTime = 0) {
 }
 function renderExperiment() {
   const spec = LABS[lab];
+  document.body.dataset.lab = lab;
   document
     .querySelectorAll("[data-lab]")
     .forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.lab === lab)));
@@ -146,6 +147,16 @@ function renderExperiment() {
   $("time").max = String(model.duration || 1);
   $("time").disabled = model.duration === 0;
   $("time-range").textContent = `0–${fmt(model.duration)} s`;
+  const contactIsVisible =
+    lab === "collision" &&
+    model.eventTime !== null &&
+    model.eventTime <= model.duration;
+  $("event-track").hidden = !contactIsVisible;
+  if (contactIsVisible) {
+    $("event-time").textContent = `${fmt(model.eventTime)} s`;
+    $("event-marker").style.left =
+      `clamp(65px, ${(model.eventTime / model.duration) * 100}%, calc(100% - 65px))`;
+  }
   samples = sampleModel(model);
   $("secondary-legend").hidden = lab !== "collision";
   $("comparison-legend").hidden = true;
@@ -206,7 +217,7 @@ function renderScene(state) {
       markerHeight: 5,
       orient: "auto",
     });
-  marker.append(svg("path", { d: "M0 0 L8 4 L0 8z", fill: "#173345" }));
+  marker.append(svg("path", { d: "M0 0 L8 4 L0 8z", fill: "currentColor" }));
   defs.append(marker);
   target.append(defs);
   const vector = (x, y, dx, dy) => {
@@ -258,7 +269,7 @@ function renderScene(state) {
       bodyX = X(state.x);
     line(target, left, 200, right, 200);
     line(target, X(0), 55, X(0), 220, "cursor");
-    target.append(svg("rect", { x: left, y: 92, width: 10, height: 108, fill: "#b6c5bf" }));
+    target.append(svg("rect", { x: left, y: 92, width: 10, height: 108, class: "anchor" }));
     const start = left + 10,
       finish = bodyX - 20,
       count = 12;
@@ -330,7 +341,9 @@ function renderPlot() {
   clearSVG(
     plot,
     `${spec.label} against time`,
-    "Current model is solid; body 2 is dashed; an imported sample set is dotted. A vertical line marks selected time.",
+    lab === "collision"
+      ? "Body 1 is solid; body 2 is dashed; an imported sample set is dotted. A dashed vertical line marks contact; a solid vertical line marks selected time."
+      : "Current model is solid; an imported sample set is dotted. A vertical line marks selected time.",
     "plot-accessible",
   );
   const width = drawingWidth(plot, 270),
@@ -376,6 +389,22 @@ function renderPlot() {
   path(samples, key, "trace");
   if (lab === "collision") path(samples, "v2", "trace secondary");
   if (ref.length) path(ref, key, "trace comparison");
+  if (lab === "collision" && model.eventTime !== null && model.eventTime <= model.duration) {
+    const contactX = X(model.eventTime);
+    plot.append(svg("line", { x1: contactX, x2: contactX, y1: 34, y2: 224, class: "contact-line" }));
+    plot.append(
+      svg(
+        "text",
+        {
+          x: Math.max(left + 39, Math.min(right - 39, contactX)),
+          y: 32,
+          "text-anchor": "middle",
+          class: "contact-label",
+        },
+        "CONTACT",
+      ),
+    );
+  }
   const cursor = svg("line", { x1: X(time), x2: X(time), y1: 34, y2: 224, class: "cursor" });
   plot.append(cursor);
   plotGeometry = { cursor, X };

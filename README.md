@@ -4,9 +4,13 @@
 
 Try the collision lab: set restitution to `0.4`, select **Apply & reset**, then scrub to `1.8 s`. Contact occurs at `1.333 s`; the two bodies leave with velocities of `1.6` and `2.8 m/s`. Total momentum remains `6 kg·m/s` while kinetic energy falls from `9` to `6.48 J`.
 
-[![The live collision lab paused at 1.8 seconds, showing two separated bodies, a 0.4 restitution input, the time slider, and momentum and energy readings.](docs/collision-after-contact.png)](https://nazeeh111.github.io/PhysicsBench/)
+[![The collision lab paused at 1.8 seconds, showing the two bodies, the 0.4 restitution input, a contact mark on the time slider, and momentum and energy readings.](docs/collision-after-contact-v2.png)](https://nazeeh111.github.io/PhysicsBench/)
 
-*Actual browser capture of that experiment. The velocity trace continues below the captured area.*
+*Current-source browser capture of that experiment. The blue and magenta marks identify body 1 and body 2 across the scene, readings and plot.*
+
+[![Velocity over time for the same collision. A magenta dashed line marks contact at 1.333 seconds and a dark solid line marks the selected 1.8-second state.](docs/collision-time-trace.png)](https://nazeeh111.github.io/PhysicsBench/)
+
+*The two velocity traces change at contact. The separate cursor shows which instant the scene and measurements display.*
 
 PhysicsBench is an original browser instrument by Nazeeh for exploring three ideal analytical mechanics models:
 
