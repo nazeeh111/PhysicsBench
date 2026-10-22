@@ -160,7 +160,7 @@ export function mountAudio(container) {
       $(id).disabled = source !== "simulation";
     $("#audio-second").disabled =
       source !== "simulation" || parameters.kind === "sine";
-    $("[data-tone]").disabled = source !== "simulation";
+    $("[data-tone]").disabled = source !== "simulation" || micPending;
   }
   function clearHistory() {
     historyFrames = 0;
@@ -481,6 +481,7 @@ export function mountAudio(container) {
         FFT_SIZE,
         reportedSettings,
       );
+      stopTone();
       source = "microphone";
       sampleRate = pendingContext.sampleRate;
       samples = new Float32Array(FFT_SIZE);

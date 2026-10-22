@@ -7,6 +7,7 @@
 - Added opt-in sample-timeline AudioWorklet acquisition, explicit missing-input/render health, cancellation and capture provenance.
 - Added confidence/ambiguity-gated pixel tracking, source-linked x/y analysis, competing motion explanations, corrections/exclusions/undo and calibration sensitivity.
 - Mapped portrait-video clicks through the visible frame and preserved existing analysis when an oversized replacement is rejected.
+- Stop reference tones when microphone capture starts and disable the tone control while permission is pending.
 - Added validated reopenable records, exact raw float32 packets, SHA-256 duplicate detection, transactional local persistence and repeatability-aware A/B records.
 - Added adversarial scientific tests, real offline audio-processor execution, end-to-end record replay, fresh investigation screenshots and primary-source research.
 

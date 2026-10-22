@@ -491,22 +491,74 @@ try {
   await permission.addInitScript(() => {
     window.pending = [];
     window.trackStops = 0;
+    window.toneStarts = 0;
+    window.toneStops = 0;
+    class MockAudioContext {
+      constructor() {
+        this.currentTime = 0;
+        this.sampleRate = 48000;
+        this.state = "running";
+        this.destination = {};
+      }
+      resume() {
+        this.state = "running";
+        return Promise.resolve();
+      }
+      close() {
+        this.state = "closed";
+        return Promise.resolve();
+      }
+      createOscillator() {
+        return {
+          type: "sine",
+          frequency: { value: 0 },
+          connect() { return this; },
+          start() { window.toneStarts++; },
+          stop() { window.toneStops++; },
+          disconnect() {},
+        };
+      }
+      createGain() {
+        return {
+          gain: { setValueAtTime() {}, linearRampToValueAtTime() {} },
+          connect() { return this; },
+        };
+      }
+      createAnalyser() {
+        return { fftSize: 0, getFloatTimeDomainData(buffer) { buffer.fill(0); } };
+      }
+      createMediaStreamSource() {
+        return { connect() {} };
+      }
+    }
+    Object.defineProperty(window, "AudioContext", {
+      configurable: true,
+      value: MockAudioContext,
+    });
     Object.defineProperty(navigator, "mediaDevices", {
       value: {
         getUserMedia: () =>
-          new Promise((resolve) => window.pending.push(resolve)),
+          new Promise((resolve, reject) =>
+            window.pending.push({ resolve, reject }),
+          ),
       },
     });
     window.grantLate = () =>
-      window.pending.shift()({
+      window.pending.shift().resolve({
         getTracks: () => [
           {
             stop() {
               window.trackStops++;
             },
+            getSettings() { return {}; },
+            addEventListener() {},
           },
         ],
       });
+    window.denyMicrophone = () =>
+      window.pending.shift().reject(
+        new DOMException("Denied by test fixture", "NotAllowedError"),
+      );
   });
   await permission.goto(base);
   await permission.locator("[data-verdict][data-verdict=pass]").waitFor();
@@ -519,6 +571,49 @@ try {
     await permission.locator(".acoustic-lab [data-message]").innerText(),
     /canceled/,
   );
+  // A reference tone must stop as microphone capture starts and stay unavailable
+  // during the permission wait and after the microphone becomes active.
+  await permission.locator("[data-mode=audio]").click();
+  await permission.locator("[data-tone]").press("Enter");
+  await permission.waitForFunction(() => window.toneStarts === 1);
+  await permission.locator("[data-mic]").press("Enter");
+  await permission.waitForFunction(
+    () => window.toneStops === 1 && window.pending.length === 1,
+  );
+  assert.equal(await permission.locator("[data-tone]").isDisabled(), true);
+  await permission.evaluate(() => window.grantLate());
+  await permission.waitForFunction(
+    () =>
+      document.querySelector(".audio-lab [data-source]").textContent ===
+      "Live microphone",
+  );
+  assert.equal(await permission.evaluate(() => window.toneStarts), 1);
+  assert.equal(await permission.evaluate(() => window.toneStops), 1);
+  await permission.locator("[data-mic]").click();
+  await permission.waitForFunction(
+    () =>
+      document.querySelector(".audio-lab [data-source]").textContent ===
+      "Simulated signal",
+  );
+  await permission.locator("[data-mic]").click();
+  await permission.waitForFunction(() => window.pending.length === 1);
+  assert.equal(await permission.locator("[data-tone]").isDisabled(), true);
+  await permission.evaluate(() => window.denyMicrophone());
+  await permission.waitForFunction(
+    () => document.querySelector(".audio-lab [data-error]").textContent.includes("permission was denied"),
+  );
+  assert.equal(await permission.locator("[data-tone]").isDisabled(), false);
+  assert.equal(await permission.evaluate(() => window.toneStarts), 1);
+  await permission.locator("[data-mic]").click();
+  await permission.waitForFunction(() => window.pending.length === 1);
+  assert.equal(await permission.locator("[data-tone]").isDisabled(), true);
+  await permission.evaluate(() => window.grantLate());
+  await permission.waitForFunction(
+    () =>
+      document.querySelector(".audio-lab [data-source]").textContent ===
+      "Live microphone",
+  );
+  assert.equal(await permission.evaluate(() => window.toneStarts), 1);
   assert.deepEqual(errors, []);
   assert.deepEqual(httpFailures, []);
   console.log(
