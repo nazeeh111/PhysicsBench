@@ -1,6 +1,14 @@
 # PhysicsBench
 
-PhysicsBench is an original browser instrument by Nazeeh for exploring three analytical mechanics models. Change initial conditions, pause or scrub exact time, inspect motion and measurements, and save reproducible experiments as local files.
+**A mechanics bench you can pause at the instant of contact.** [Open the live instrument](https://nazeeh111.github.io/PhysicsBench/) to change initial conditions, scrub exact time, and watch the scene, measurements and plot follow the same analytical model. Sessions and sample data save as local files.
+
+Try the collision lab: set restitution to `0.4`, select **Apply & reset**, then scrub to `1.8 s`. Contact occurs at `1.333 s`; the two bodies leave with velocities of `1.6` and `2.8 m/s`. Total momentum remains `6 kg·m/s` while kinetic energy falls from `9` to `6.48 J`.
+
+[![The live collision lab paused at 1.8 seconds, showing two separated bodies, a 0.4 restitution input, the time slider, and momentum and energy readings.](docs/collision-after-contact.png)](https://nazeeh111.github.io/PhysicsBench/)
+
+*Actual browser capture of that experiment. The velocity trace continues below the captured area.*
+
+PhysicsBench is an original browser instrument by Nazeeh for exploring three ideal analytical mechanics models:
 
 - **Projectile:** uniform gravity, a flat ground plane and no air resistance. The trajectory uses equal horizontal and vertical spatial scales and stops at first ground contact. Terminal readings describe the instant before impact.
 - **Mass–spring:** an ideal frictionless horizontal oscillator with a linear, massless spring. Inspect four periods of displacement, velocity, force and energy exchange.
