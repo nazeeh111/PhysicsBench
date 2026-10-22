@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0
+
+- Rebuilt the product around complete acoustic and motion investigations, replacing the decorative dashboard hero.
+- Added training-only acoustic identification, a simpler baseline, independent probe validation, canonical source verification and full-tail scoring.
+- Added opt-in sample-timeline AudioWorklet acquisition, explicit missing-input/render health, cancellation and capture provenance.
+- Added confidence/ambiguity-gated pixel tracking, source-linked x/y analysis, competing motion explanations, corrections/exclusions/undo and calibration sensitivity.
+- Added validated reopenable records, exact raw float32 packets, SHA-256 duplicate detection, transactional local persistence and repeatability-aware A/B records.
+- Added adversarial scientific tests, real offline audio-processor execution, end-to-end record replay, fresh investigation screenshots and primary-source research.
+
 ## 0.2.0
 
 - Added a laptop-first instrument shell, keyboard instrument search, field guide, responsive layouts and preserved workspaces.

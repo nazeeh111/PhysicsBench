@@ -1,0 +1,18 @@
+{
+  "browser": "151.0.7922.34",
+  "offline": {
+    "health": {
+      "startFrame": 0,
+      "endFrame": 55200,
+      "missingInputFrames": 0,
+      "discontinuities": 0,
+      "gapFrames": 0,
+      "totalFrames": 55200
+    },
+    "error": 0.0011115450544299103,
+    "accepted": true,
+    "baseline": 0.37123690894862693
+  },
+  "errors": [],
+  "httpFailures": []
+}

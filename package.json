@@ -1,15 +1,16 @@
 {
   "name": "physicsbench",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
-  "description": "A local-first browser science workbench: mechanics, sound, video tracking and reproducible data analysis.",
+  "description": "Reproducible local investigations: training-only acoustic identification with independent signal prediction, assisted motion tracking and explicit model evidence.",
   "license": "MIT",
   "scripts": {
     "test": "node --test *.test.js",
     "build": "node scripts/build.mjs",
     "start": "node scripts/serve.mjs",
-    "test:browser": "node scripts/browser-check.mjs"
+    "test:browser": "node scripts/browser-check.mjs",
+    "benchmark": "node scripts/benchmark.mjs"
   },
   "engines": {
     "node": ">=22"

@@ -34,11 +34,7 @@ jobs:
           npx --no-install playwright install --with-deps chromium
       - name: Check integrated browser workflows
         if: matrix.node == 24
-        run: |
-          npm start > "$RUNNER_TEMP/physicsbench-preview.log" 2>&1 &
-          physicsbench_preview_pid=$!
-          trap 'kill "$physicsbench_preview_pid"' EXIT
-          npm run test:browser
+        run: npm run test:browser
   build-site:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: check

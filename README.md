@@ -1,111 +1,110 @@
-<div align="center">
-
 # PhysicsBench
 
-### Your laptop is a lab.
+**A model should survive a measurement it did not fit.**
 
-Explore a model. Inspect a signal. Make a case with data.
+PhysicsBench runs complete scientific investigations locally in the browser: recover an acoustic signal path and test it against an independent sound, or track an object from pixels and ask which motion model explains it. Raw observations, assumptions, corrections and analysis settings travel together in reopenable experiment records.
 
-[Open the lab](https://nazeeh111.github.io/PhysicsBench/) · [A two-minute experiment](#a-two-minute-experiment) · [Methods](docs/METHODS.md) · [Research](docs/RESEARCH.md)
+[Try the lab](https://nazeeh111.github.io/PhysicsBench/) · [Methods](docs/INVESTIGATIONS.md) · [Evidence](docs/VERIFICATION.md) · [Research and alternatives](docs/RESEARCH-V2.md)
 
-**Vanilla JavaScript · No production dependencies · Local computation · MIT**
+**Review build:** these investigations are on `feat/laptop-science-workbench` in [PR #1](https://github.com/nazeeh111/PhysicsBench/pull/1). GitHub Pages follows `main` and shows the previous version until merge. Use the branch command below to run this build.
 
-</div>
+![Acoustic investigation: recovered response, independent prediction and its error against a simpler baseline](docs/images/v3/acoustic-investigation.png)
 
-![PhysicsBench mechanics workbench, showing an analytical trajectory, editable conditions and live measurements](docs/images/mechanics-desktop.png)
+## Two investigations with consequences
 
-PhysicsBench is a browser science workbench built by Nazeeh Abdul-Hadi. It connects exact mechanics simulations, optional microphone analysis and calibrated video tracking to inspectable data analysis. Files are processed locally, and the application makes no data uploads. No account, dedicated GPU, phone or paid API is needed for the simulation and demonstration workflows.
+### Can one sound predict another?
 
-## Five instruments, one investigation
+A known logarithmic sweep learns a finite, frequency-limited input/output model. A separately generated random probe tests the prediction. The probe response **never chooses the model, gain, latency or scoring window**.
 
-| Instrument | What you can investigate |
-| --- | --- |
-| **Projectile motion** | Launch conditions, Earth/Moon/Mars gravity, exact trajectories, energy and parameter sweeps. |
-| **Mass & spring** | Position, velocity, restoring force, energy exchange and the square-root relationship between period and mass. |
-| **Collisions** | Momentum, restitution, kinetic-energy loss and contacts that occur beyond the viewing window. |
-| **Sound laboratory** | Waveform, Hann-window FFT spectrum, spectrogram, dominant frequency, relative signal level and clipping. Start with a silent synthesized signal or opt into microphone capture. |
-| **Motion & data** | Track points in a local video, calibrate a reference distance, import observations, fit a line or parabola and inspect residuals and coefficient intervals. |
+- Compare the recovered filter against a simpler delay-and-gain baseline learned from the same training data.
+- Inspect the impulse response, transfer magnitude, recorded/predicted probe, residuals and remaining finite-response energy. Zoom into a 5 or 20 ms detail without changing the score.
+- Try a nonlinear signal path or silent probe. Clipping, unresolved signals, interrupted capture and poor held-out prediction withhold or reject the result.
+- Run virtual reference trials without permissions, or explicitly record a 3.45-second speaker/microphone experiment using an AudioWorklet. The emitted stimulus and captured input share one sample timeline; real device latency remains part of the identified path.
+- Save separate trials under two named conditions and compare late response energy with observed repeatability. Re-saving or relabeling identical raw samples cannot manufacture independent repetitions.
 
-The useful connection is **Analyze this trajectory**: send a mechanics model directly into the same fitting tool used for local observations. Compare model choices, inspect what the residuals reveal and export the evidence. Simulation provenance remains visible, so an exact analytical curve cannot masquerade as a physical measurement.
+The result concerns the **combined speaker, microphone, room and processing**, at the tested band and level. It does not establish calibrated SPL, room-only response, absolute distance, RT60 or universal linearity. Imported source labels are declarations, not proof of acquisition provenance.
 
-Instrument state survives navigation within the page. Switching instruments pauses mechanics and video, releases the microphone, and stops speaker output. Measurement history retains up to eight datasets with explicit removal and no automatic eviction. Reloading or closing the page clears the session; export important work first.
+### Does this model explain that motion?
 
-## A two-minute experiment
+The opening specimen is generated image data with known truth. Observations are extracted by the **same pixel tracker** used for local video, rather than sampled directly from its trajectory equation.
 
-1. Open **Projectile motion**, choose **Maximum range**, and open **Parameter explorer**. Sweep launch angle from 0° to 90°. Under equal launch/landing height and no drag, the sampled maximum appears at 45°.
-2. Choose **Analyze this trajectory**. A quadratic recovers the model acceleration. Choose a linear fit and inspect its curved residuals. This demonstrates model mismatch using generated data, not a real gravity measurement.
-3. Open **Sound laboratory**, choose a two-tone signal and press **Run analysis**. Inspect the two spectral peaks. The display is silent unless you explicitly start the quiet reference tone.
-4. Open **Motion & data** and import [synthetic-projectile.csv](examples/synthetic-projectile.csv), or track a local video. Video values stay in source pixels until a known reference length is applied. Export observations and an analysis record.
+![Motion investigation: tracked source points, reconstructed path, acceleration and competing explanations](docs/images/v3/motion-investigation.png)
+
+- A bounded normalized-cross-correlation tracker follows a selected texture. Low similarity or competing matches stop tracking and leave an explicit gap.
+- Position, residuals, selected observation and source frame share a time cursor. Correct a point, exclude it without discarding it, or undo a change.
+- Compare constant velocity, ballistic motion and acceleration in both axes. Residuals expose why a more convenient assumption may be wrong.
+- Calibrate ruler endpoints and origin. Change ruler/point error bounds to see acceleration sensitivity; that bound is distinct from a regression confidence interval.
+- Reopen points, exclusions, model, window, calibration, settings and notes. Local video bytes stay separate; reattach the original file to inspect or correct its pixels.
+
+**Try the occlusion specimen.** The tracker must stop at the obstacle instead of inventing observations behind it.
 
 <details>
-<summary><strong>Sound and analysis screenshots</strong></summary>
+<summary>Failure controls, not just successful demonstrations</summary>
 
-![Waveform, spectrum and spectrogram beside signal controls](docs/images/sound-desktop.png)
+![Nonlinear reference path rejects the fixed linear prediction](docs/images/v3/nonlinear-rejection.png)
 
-![Position fitting with observations, residuals and uncertainty information](docs/images/analysis-desktop.png)
+![Tracking stops at an occlusion and retains a visible unresolved gap](docs/images/v3/tracking-failure.png)
 
 </details>
 
-## Run locally
+## An experiment record, not a screenshot
 
-Use **Node.js 22 or newer**. The application and numerical tests require no package installation.
+Choose **Save run** to retain an investigation in this browser across reloads. **Export record** carries raw source/response samples or image observations plus source metadata, assumptions and settings. **Open investigation** validates it and recomputes the analysis. Cached imported scores are not trusted.
+
+Acoustic recording fingerprints are SHA-256 hashes over canonical raw float32 samples and sample rate. A/B comparison rejects duplicate captures, missing identities, failed quality checks and mismatched protocol, level, band, source, setup or reported processing. This prevents ordinary replay/label changes from becoming false replication; it does not certify physical geometry or adversarial provenance.
+
+Browser storage has a 40-run limit with explicit removal and no silent eviction. Saves are transactional. If persistent storage is unavailable, the UI says so and export remains available. Clearing browser data removes local records. See [record formats and bounds](docs/INVESTIGATIONS.md#records-and-replay).
+
+The original projectile, mass–spring and collision models remain in **Mechanics**, including presets, parameter studies and v1 session compatibility. **Signal scope** and **Data fitting** retain general audio and CSV utilities. Their original contracts are documented in [MECHANICS.md](docs/MECHANICS.md) and [METHODS.md](docs/METHODS.md).
+
+## Run
+
+Node.js 22+; no production dependencies or package installation needed:
 
 ```sh
-git clone https://github.com/nazeeh111/PhysicsBench.git
+git clone --branch feat/laptop-science-workbench --single-branch https://github.com/nazeeh111/PhysicsBench.git
 cd PhysicsBench
 npm test
 npm run build
 npm start
 ```
 
-Open **http://127.0.0.1:4173**. For another port: `npm start -- --port 4175`.
+Open **http://127.0.0.1:4173**. Optional port: `npm start -- --port 4175`.
 
-The build creates an explicit set of static assets in `dist/` with a deterministic SHA-256 manifest. The preview verifies those bytes before serving them, binds to loopback, and refuses arbitrary filesystem paths. Rebuild and restart after editing source. Deploy `dist/` to a static HTTPS host; relative paths support GitHub Pages project subpaths. Opening ES modules directly through `file://` is not supported.
+The static build uses relative URLs, an explicit asset allowlist and a SHA-256 manifest. The loopback preview verifies those bytes, blocks arbitrary filesystem access and makes no backend data requests. Host `dist/` on static HTTPS hosting; direct `file://` module loading is unsupported. No account, paid API, phone or special laptop sensor is required for the reference investigations.
 
-## Compatibility and scientific limits
+## Evidence you can reproduce
 
-| Capability | Requirement and boundary |
+`npm test` covers independent time-domain acoustic oracles, held-out response mutation, late reflections, silence, nonlinear paths, false source metadata, missing audio input, render discontinuities, tracker distractors/occlusion, numerical sensitivity, record roundtrips and the original mechanics/data invariants.
+
+`npm run test:browser` uses a separately available Playwright installation and serves the current verified build itself. It checks actual workers and AudioWorklet execution, export/recompute, persistence, repeated comparisons, pixel tracking and gaps, corrections/undo, local MP4 timestamps, retained mechanics and narrow layouts. Hardware access is mocked or avoided. See [verification details](docs/VERIFICATION.md).
+
+`npm run benchmark` reports cold and warmed estimator times for 16, 48 and 96 kHz on the machine running it, excluding worker/encoding overhead. It is not a claim about every laptop.
+
+| Boundary | Current meaning |
 | --- | --- |
-| Mechanics, synthesis, CSV analysis | A current desktop browser with JavaScript, Canvas 2D and SVG. No microphone/camera permission or special sensor required. |
-| Microphone | HTTPS or localhost, Web Audio, an available microphone, and browser/OS permission. Denial or unsupported capture leaves simulation available. No microphone monitoring through speakers. |
-| Sound level | RMS is **dBFS**, a digital level relative to full scale. It is **not calibrated dB SPL**. Dominant spectral frequency can be a harmonic rather than fundamental pitch. |
-| Local video | Browser-decodable video, up to 200 MiB, 30 minutes, 8.3 MP, 3840 pixels per side and 8:1 aspect ratio. Tracking is manual; seeking uses the browser-reported media time and is not guaranteed frame accurate. |
-| Physical video units | Known reference length in the plane of motion, fixed camera and suitable geometry. Calibration does not correct perspective, lens distortion, depth changes or camera shake. |
-| Fit uncertainty | Ordinary least squares with QR decomposition, centered/scaled time and 95% coefficient intervals. Intervals assume independent normal position errors with equal variance and exact time/scale. Calibration and timing errors are excluded. |
-| Portability evidence | Automated Chromium checks on macOS and Ubuntu CI across 320–1440 px widths. Windows/ChromeOS, Firefox/Safari and physical microphone accuracy runs have **not** been performed. |
+| Reference investigations | Browser computation, generated pixels and signals. No microphone permission. |
+| Real acoustic capture | HTTPS/localhost, available Web Audio/AudioWorklet/microphone, permission and explicit test-sound activation. Missing/processed/interrupted input can invalidate the experiment. |
+| Local video | Supported codec, up to 200 MiB, 30 min and bounded dimensions. Presented media timestamps are used where available; unsupported automatic timing falls back to manual work rather than invented frame times. |
+| Scientific evidence | Controlled digital/pixel fixtures and software checks. Real microphone accuracy, acoustic calibration and physical video validation remain unverified. |
+| Portability | Standard browser APIs with graceful failure paths. Chromium is exercised by automation; Firefox/Safari and physical Windows/ChromeOS hardware need separate validation. No dedicated GPU assumption. |
+| Motion error | Fits describe the selected observations; they are not held-out motion predictions. Sensitivity bounds omit timing, perspective and camera movement. |
 
-Laptop accelerometers, magnetometers, barometers and force sensors are not assumed. “Laptop lab” describes a portable baseline with optional capabilities, not a guarantee about every laptop, browser or physical measurement. These are educational instruments, not calibrated metrology equipment.
+## Why this project exists
 
-Keyboard controls use native form elements and visible focus. **Ctrl/⌘ K** finds an instrument; **Escape** closes dialogs. Reduced motion replaces mechanics playback with single steps. Numeric readings, tables and exports accompany the visual plots.
+The interesting work is connecting **source → assumptions → model → a discriminating test → a replayable record**. Browser spectra, sweep/IR measurement and video tracking already exist. [The research](docs/RESEARCH-V2.md) compares close browser precedents and stronger conventional tools, including REW, Open Sound Meter, Friture, Tracker, TrackLab and CODAP. This project does not claim to invent those techniques or outperform those tools broadly.
 
-## Files you can trust and inspect
-
-- **Mechanics JSON:** versioned, bounded experiment sessions; existing v1 files remain supported.
-- **Mechanics CSV:** validated model replay, with SI units and assumptions. Its strict format is separate from arbitrary measured observations.
-- **Audio JSON:** a bounded exact sample-window replay, including source and acquisition information where available. It is not a continuous recording. CSV exports the same window.
-- **Observation CSV:** two numeric columns, time in seconds and value; optional header `time_s,value`. Units are supplied explicitly. See the [example](examples/synthetic-projectile.csv).
-- **Analysis JSON:** observations, provenance, fit window, coefficients, intervals, residuals and calibration metadata. Export-only; use the CSV and recorded settings to reconstruct an analysis. Video files themselves are not embedded.
-
-See [methods and file limits](docs/METHODS.md) and the [original mechanics format contract](docs/MECHANICS.md).
-
-## Engineering and evidence
-
-The app separates pure scientific computation from browser acquisition and rendering:
+The implementation separates pure numerical methods, acquisition and interaction:
 
 ```text
-models.js ── analytical mechanics ── app.js ───────┐
-sweep.js ─── parameter studies ───────────────────┤
-audio-dsp.js ── FFT / synthesis ── audio.js ───────┼── bench.js / index.html
-analysis.js ── QR regression ──── measure.js ─────┤   instrument navigation
-data.js ───── bounded model interchange ─────────┘   and preserved workspaces
+capture-worklet.js ─ raw sample timeline ─ acquisition.js
+                        │
+acoustics.js ─ training-only inverse / independent test ─ acoustic-worker.js
+                        │                                  │
+tracking.js ─ bounded NCC ─ motion-lab.js           acoustic-lab.js
+                        └──────────────┬───────────────────┘
+                          experiment.js / bench.js
+                 raw records · fingerprints · local storage · replay
 ```
 
-Tests cover conservation laws, independent numerical oracles, signal fixtures, regression uncertainty, file validation and distribution boundaries. Browser checks exercise actual controls, downloads and local-video calibration; microphone lifecycle checks use simulated hardware. **Actual microphone accuracy and cross-device scientific validation are untested.** Exact passed checks and reproduction commands are in [VERIFICATION.md](docs/VERIFICATION.md).
-
-Research considered twelve relevant precedents, including phyphox, PhET, Tracker, CircuitJS, CODAP, JupyterLite and Chrome Music Lab. [The research record](docs/RESEARCH.md) explains what transfers and what does not. The interface, analytical implementation and illustrations are original; no third-party app artwork or applets are redistributed. Combining established techniques is not a claim of scientific novelty or a measured tenfold improvement.
-
-## Project and contribution
-
-Issues and focused pull requests are welcome. Include the input data, browser/version, expected behavior and reproducible steps. See [CONTRIBUTING.md](CONTRIBUTING.md), [security reporting](SECURITY.md) and [release notes](CHANGELOG.md).
-
-Built by **[Nazeeh Abdul-Hadi](https://github.com/nazeeh111)**. [MIT license](LICENSE).
+Built by [Nazeeh Abdul-Hadi](https://github.com/nazeeh111). Original application code and artwork under [MIT](LICENSE). [Contributing](CONTRIBUTING.md) · [Security reporting](SECURITY.md) · [Release notes](CHANGELOG.md)

@@ -1,418 +1,422 @@
+import assert from "node:assert/strict";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createServer } from "node:http";
+import { createHandler, loadAssets } from "./serve.mjs";
 const { chromium } = await import(
   process.env.PLAYWRIGHT_MODULE || "playwright"
 );
-import assert from "node:assert/strict";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
 const out = process.env.BROWSER_ARTIFACT_DIR || ".browser-artifacts";
 await mkdir(out, { recursive: true });
-const base = process.env.BENCH_URL || "http://127.0.0.1:4173/";
-for (let attempt = 0; attempt < 30; attempt++) {
-  try { if ((await fetch(base)).ok) break; } catch {}
-  if (attempt === 29) throw new Error(`Preview unavailable at ${base}. Run npm run build and npm start first.`);
-  await new Promise(resolve => setTimeout(resolve, 100));
+let server,
+  base = process.env.BENCH_URL;
+if (!base) {
+  server = createServer(createHandler(await loadAssets()));
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  base = `http://127.0.0.1:${server.address().port}/`;
 }
 const browser = await chromium.launch({ headless: true });
 console.log(`Browser: Chromium ${browser.version()}`);
 try {
-  const page = await browser.newPage({
-    viewport: { width: 1440, height: 1080 },
-    deviceScaleFactor: 1,
-  });
-  const errors = [],
-    failed = [];
+  const context = await browser.newContext({
+      viewport: { width: 1536, height: 1050 },
+      deviceScaleFactor: 2,
+    }),
+    page = await context.newPage(),
+    errors = [],
+    httpFailures = [];
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("response", (r) => {
-    if (r.status() >= 400) failed.push([r.status(), r.url()]);
+    if (r.status() >= 400) httpFailures.push([r.status(), r.url()]);
   });
   await page.goto(base);
-  await page.locator("#parameter-speed").waitFor();
-  console.log("loaded", await page.title(), "errors", errors);
-  await page.evaluate(() => scrollTo(0, 0));
-  await page.waitForTimeout(80);
-  await page.screenshot({
-    path: out + "/mechanics-desktop.png",
-    fullPage: false,
-  });
-  assert.match(
-    await page.locator("#readings").innerText(),
-    /Horizontal position/,
+  await page.locator("[data-verdict][data-verdict=pass]").waitFor();
+  await page.waitForFunction(
+    () => !document.querySelector("#record-save").disabled,
   );
-  await page.getByRole("button", { name: "Moon", exact: true }).click();
-  assert.equal(await page.locator("#parameter-gravity").inputValue(), "1.62");
-  await page.locator("#parameter-speed").fill("-1");
-  await page.locator("button.apply").click();
-  assert.match(await page.locator("#error").innerText(), /Launch speed/);
-  await page.getByRole("button", { name: "Earth", exact: true }).click();
-  await page.locator("#time").fill("1");
-  assert.match(await page.locator("#time-output").textContent(), /1 s/);
-  const save = page.waitForEvent("download");
-  await page.locator("#session-export").click();
-  const session = await save;
-  const bytes = await readFile(await session.path());
-  await page.locator("[data-lab=oscillator]").click();
+  assert.match(
+    await page.locator("[data-source-tag]").innerText(),
+    /SYNTHETIC/,
+  );
+  const firstScore = await page
+    .locator(".acoustic-lab [data-error]")
+    .innerText();
+  await page.locator("[data-test-view]").selectOption("0.02");
+  await page.locator("[data-test-start]").fill("200");
+  assert.equal(
+    await page.locator(".acoustic-lab [data-error]").innerText(),
+    firstScore,
+  );
+  await page.locator("[data-test-view]").selectOption("full");
+  await page.screenshot({ path: `${out}/acoustic-investigation.png` });
+  const downloadPromise = page.waitForEvent("download");
+  await page.locator("#record-export").click();
+  const download = await downloadPromise;
+  const bytes = await readFile(await download.path()),
+    original = JSON.parse(bytes.toString());
+  assert.equal(original.kind, "acoustic");
+  assert.equal(original.data.captureFingerprint.length, 64);
+  await page.locator("#record-save").click();
+  await page.waitForFunction(
+    () => document.querySelector("#run-count").textContent === "1",
+  );
+  await page.locator("#record-save").click();
+  assert.equal(await page.locator("#run-count").innerText(), "1");
+  await page.locator("[data-specimen]").selectOption("nonlinear");
+  await page.waitForFunction(
+    () =>
+      document.querySelector("[data-verdict]")?.textContent ===
+      "Linear model rejected",
+  );
+  await page.screenshot({ path: `${out}/nonlinear-rejection.png` });
+  await page.locator("[data-specimen]").selectOption("silent");
+  await page.waitForFunction(
+    () =>
+      document.querySelector("[data-verdict]")?.textContent ===
+      "Evidence is inconclusive",
+  );
+  const bad = { ...original, data: { ...original.data, acquisitionId: "" } };
   await page
-    .locator("#session-file")
+    .locator("#record-file")
     .setInputFiles({
-      name: "session.json",
+      name: "missing-id.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(bad)),
+    });
+  await page.waitForFunction(() =>
+    document
+      .querySelector("#shell-status")
+      .textContent.includes("Unsupported acoustic"),
+  );
+  assert.match(
+    await page.locator("[data-verdict]").innerText(),
+    /inconclusive/,
+  );
+  await page
+    .locator("#record-file")
+    .setInputFiles({
+      name: "saved.json",
       mimeType: "application/json",
       buffer: bytes,
     });
-  await page.waitForFunction(
-    () =>
-      document.querySelector("#lab-name").textContent.trim() === "Projectile",
+  await page.waitForFunction(() =>
+    document.querySelector("#shell-status").textContent.includes("Reopened"),
   );
-  await page.locator("#plot-quantity").selectOption("vy");
-  assert.match(await page.locator("#plot-title").innerText(), /velocity/i);
+  assert.equal(
+    await page.locator(".acoustic-lab [data-error]").innerText(),
+    firstScore,
+  );
+  // Distinct virtual acquisitions, fixed underlying path, explicit A/B conditions.
+  await page.locator("[data-repeat]").click();
+  await page.waitForFunction(
+    () => !document.querySelector(".acoustic-lab [data-repeat]").disabled,
+  );
+  await page.locator("[data-condition]").fill("Reflective reference");
+  await page.locator("#record-save").click();
+  await page.waitForFunction(
+    () => document.querySelector("#run-count").textContent === "2",
+  );
+  for (let i = 0; i < 2; i++) {
+    await page.locator("[data-specimen]").selectOption("damped");
+    if (i) await page.locator("[data-repeat]").click();
+    await page.waitForFunction(
+      () => !document.querySelector(".acoustic-lab [data-repeat]").disabled,
+    );
+    await page.locator("#record-save").click();
+    await page.waitForFunction(
+      (n) => document.querySelector("#run-count").textContent === String(n),
+      i + 3,
+    );
+  }
+  await page.locator("#runs-open").click();
+  await page.locator("#runs-dialog").waitFor({ state: "visible" });
+  assert.equal(await page.locator(".run-row input").count(), 4);
+  await page
+    .locator(".run-row input")
+    .evaluateAll((inputs) => inputs.forEach((input) => (input.checked = true)));
+  await page.locator("#runs-compare").click();
+  assert.match(
+    await page.locator("#run-comparison").innerText(),
+    /acquisitions/,
+  );
+  await page.keyboard.press("Escape");
+  await page.reload();
+  await page.locator("[data-verdict][data-verdict=pass]").waitFor();
+  await page.waitForFunction(
+    () => document.querySelector("#run-count").textContent === "4",
+  );
+  await page.locator("[data-mode=motion]").click();
+  await page.waitForFunction(() =>
+    document
+      .querySelector(".motion-lab [data-status]")
+      ?.textContent.includes("complete"),
+  );
+  assert.match(
+    await page.locator(".motion-result-strip").innerText(),
+    /25 \/ 25/,
+  );
+  assert.match(await page.locator(".motion-result-strip").innerText(), /-9\.8/);
+  await page.evaluate(() => scrollTo(0, 0));
+  await page.screenshot({ path: `${out}/motion-investigation.png` });
+  const motionExport = page.waitForEvent("download");
+  await page.locator("#record-export").click();
+  const motionData = JSON.parse(
+    await readFile(await (await motionExport).path(), "utf8"),
+  );
+  assert.equal(motionData.kind, "motion");
+  assert.equal(motionData.data.observations.length, 25);
+  await page.locator(".motion-lab [data-model]").selectOption("linear");
+  assert.match(await page.locator(".motion-result-strip").innerText(), /1\.28/);
+  await page.locator(".motion-lab [data-model]").selectOption("ballistic");
+  await page.locator(".motion-lab [data-source]").selectOption("occlusion");
+  await page.waitForFunction(() =>
+    document
+      .querySelector(".motion-lab [data-gap]")
+      ?.textContent.includes("Gap"),
+  );
+  const gapCount = await page.locator(".motion-result-strip").innerText();
+  assert.match(gapCount, /unresolved gap/);
+  await page.screenshot({ path: `${out}/tracking-failure.png` });
+  await page
+    .locator("#record-file")
+    .setInputFiles({
+      name: "flight.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(motionData)),
+    });
+  await page.waitForFunction(() =>
+    document
+      .querySelector(".motion-lab [data-status]")
+      ?.textContent.includes("restored"),
+  );
+  assert.match(
+    await page.locator(".motion-result-strip").innerText(),
+    /25 \/ 25/,
+  );
+  await page.locator(".motion-lab [data-time]").fill("0.6");
+  await page.locator(".motion-lab [data-position]").focus();
+  await page.keyboard.press("ArrowRight");
+  assert.notEqual(
+    await page.locator(".motion-lab [data-time]").inputValue(),
+    "0.6",
+  );
+  const positionBounds = await page
+    .locator(".motion-lab [data-position]")
+    .boundingBox();
+  await page.locator(".motion-lab [data-position]").click({
+    position: { x: 64 + (positionBounds.width - 84) / 2, y: 75 },
+  });
+  await page.waitForFunction(() => {
+    const time = Number(document.querySelector(".motion-lab [data-time]").value);
+    return time > 0.8 && time < 1;
+  });
+  const review = page
+    .locator(".motion-lab details")
+    .filter({
+      has: page.getByText("Review points and correct tracking", {
+        exact: true,
+      }),
+    });
+  await review.locator("summary").click();
+  await page.locator(".motion-lab [data-exclude]").click();
+  assert.match(
+    await page.locator(".motion-result-strip").innerText(),
+    /24 \/ 25/,
+  );
+  await page.locator(".motion-lab [data-undo]").click();
+  assert.match(
+    await page.locator(".motion-result-strip").innerText(),
+    /25 \/ 25/,
+  );
+  // Local video decodes and uses the frame actually presented, not requested seek time.
+  await page
+    .locator(".motion-lab [data-video-file]")
+    .setInputFiles("test-fixtures/tracking.mp4");
+  await page.waitForFunction(() =>
+    document
+      .querySelector(".motion-lab [data-origin]")
+      ?.textContent.includes("LOCAL VIDEO ATTACHED"),
+  );
+  await page.locator(".motion-lab [data-time]").fill("0.75");
+  await page.waitForFunction(() => {
+    const t = parseFloat(
+      document.querySelector(".motion-lab [data-time-label]")?.textContent,
+    );
+    return t >= 0.7 && t <= 0.751;
+  });
+  assert.match(
+    await page.locator(".motion-lab [data-frame-label]").innerText(),
+    /presented media time/,
+  );
+  assert.match(
+    await page.locator(".motion-lab [data-origin]").innerText(),
+    /LOCAL VIDEO/,
+  );
+  // Retained mechanics and file formats still work.
+  await page.locator("[data-mode=mechanics]").click();
+  await page.getByRole("button", { name: "Moon", exact: true }).click();
+  assert.equal(await page.locator("#parameter-gravity").inputValue(), "1.62");
   await page.locator("#sweep-toggle").click();
   await page.locator("#sweep-run").click();
   assert.match(
     await page.locator("#sweep-summary").innerText(),
     /41 model predictions/,
   );
-  await page.locator("#sweep-min").fill("999");
-  await page.locator("#sweep-run").click();
-  assert.equal(await page.locator("#sweep-error").isVisible(), true);
-  await page.locator("#sweep-min").fill("0");
-  await page.locator("#sweep-max").fill("90");
-  await page.locator("#sweep-run").click();
   await page.locator("#send-analysis").click();
-  await page
-    .getByRole("heading", { name: "Measure. Fit. Question.", exact: true })
-    .waitFor();
   assert.match(
-    await page.locator("#extra-workspace").innerText(),
-    /Analytical simulation; not measured data/,
+    await page.locator(".measurement-layout").innerText(),
+    /Analytical simulation/,
   );
-  await page.evaluate(() => scrollTo(0, 0));
-  await page.waitForTimeout(80);
-  await page.screenshot({
-    path: out + "/analysis-desktop.png",
-    fullPage: false,
-  });
-  await page.locator("[data-mode=audio]").click();
-  await page
-    .getByRole("heading", { name: "See sound take shape.", exact: true })
-    .waitFor();
-  await page.getByRole("button", { name: "Run analysis", exact: true }).click();
-  await page.waitForTimeout(450);
-  await page
-    .getByRole("button", { name: "Pause analysis", exact: true })
-    .click();
-  assert.match(
-    await page.locator("[data-history-note]").innerText(),
-    /analysis frames/,
-  );
-  await page.evaluate(() => scrollTo(0, 0));
-  await page.waitForTimeout(80);
-  await page.screenshot({ path: out + "/sound-desktop.png", fullPage: false });
-  await page.locator("[data-mode=measure]").click();
-  await page
-    .getByRole("heading", { name: "Measure. Fit. Question.", exact: true })
-    .waitFor();
-  await page
-    .getByLabel("Import two-column measurement CSV")
-    .setInputFiles({
-      name: "measured.csv",
-      mimeType: "text/csv",
-      buffer: Buffer.from("time_s,value\n0,0\n1,1\n2,4\n3,9\n4,16\n"),
-    });
-  await page.waitForFunction(() =>
-    document
-      .querySelector("#extra-workspace")
-      .textContent.includes("Imported 5 observations"),
-  );
-  assert.match(
-    await page.locator("#extra-workspace").innerText(),
-    /Unspecified units|units/,
-  );
-  await page
-    .getByLabel("Import two-column measurement CSV")
-    .setInputFiles({
-      name: "bad.csv",
-      mimeType: "text/csv",
-      buffer: Buffer.from("0,1\n1,=alert(1)"),
-    });
-  await page.waitForFunction(() =>
-    document
-      .querySelector("#extra-workspace")
-      .textContent.includes("Previous valid observations retained"),
-  );
-  const kept = await page
-    .locator(".measurement-layout .notice")
-    .first()
-    .textContent();
-  await page.locator("[data-mode=audio]").click();
-  await page.locator("[data-mode=measure]").click();
-  assert.equal(
-    await page.locator(".measurement-layout .notice").first().textContent(),
-    kept,
-  );
-  await page.locator("[data-lab=projectile]").click();
-  await page.locator("#send-analysis").click();
-  await page
-    .getByLabel("Session dataset")
-    .selectOption({ label: "measured.csv · 5 points · unknown" });
-  assert.match(
-    await page.locator(".measurement-layout .notice").first().textContent(),
-    /measured.csv/,
-  );
-  await page
-    .getByRole("button", { name: "Load projectile demo", exact: true })
-    .click();
-  await page
-    .getByText("Track an object in a local video", { exact: true })
-    .click();
-  await page
-    .getByLabel("Local video", { exact: true })
-    .setInputFiles("test-fixtures/tracking.mp4");
-  await page.getByText(/640 × 360 source pixels/).waitFor();
-  for (const [t, y] of [
-    [0, 260],
-    [0.4, 210],
-    [0.8, 180],
-    [1.2, 170],
-  ]) {
-    await page.getByLabel("Seek time (s)", { exact: true }).fill(String(t));
-    await page.getByRole("button", { name: "Seek", exact: true }).click();
-    await page.waitForFunction((target) => {
-      const v = document.querySelector("video");
-      return !v.seeking && Math.abs(v.currentTime - target) < 0.02;
-    }, t);
-    await page.getByLabel("X (source px)", { exact: true }).fill("110");
-    await page
-      .getByLabel("Y (source px, down)", { exact: true })
-      .fill(String(y));
-    await page
-      .getByRole("button", { name: "Record coordinate", exact: true })
-      .click();
-  }
-  assert.match(
-    await page.locator(".measurement-layout .metric-grid").innerText(),
-    /px\/s²/,
-  );
-  assert.doesNotMatch(
-    await page.locator(".measurement-layout .metric-grid").innerText(),
-    /Candidate g/,
-  );
-  await page.getByLabel("Reference length (m)", { exact: true }).fill("1");
-  await page
-    .getByLabel("Reference length (source px)", { exact: true })
-    .fill("100");
-  await page
-    .getByRole("button", { name: "Apply calibration", exact: true })
-    .click();
-  const jsonDownload = page.waitForEvent("download");
-  await page
-    .getByRole("button", { name: "Export analysis JSON", exact: true })
-    .click();
-  const analysis = JSON.parse(
-    await readFile(await (await jsonDownload).path(), "utf8"),
-  );
-  assert.equal(analysis.dataset.unit, "m");
-  assert.equal(analysis.dataset.points.length, 4);
-  assert.equal(analysis.dataset.calibration.metersPerPixel, 0.01);
-  assert.equal(analysis.dataset.rawTracking[0].pixelY, 260);
-  await page.locator("[data-mode=audio]").click();
-  await page.locator("[data-mode=measure]").click();
-  assert.match(
-    await page.locator(".measurement-layout .metric-grid").innerText(),
-    /Candidate g/,
-  );
-  await page.locator("#search-open").click();
-  await page.locator("#instrument-search").fill("gravity");
-  await page
-    .getByRole("button", {
-      name: "Projectile motion Launch angle, gravity, trajectory, parameter sweeps",
-    })
-    .click();
-  assert.equal(await page.locator("#mechanics-workspace").isVisible(), true);
-  await page.locator("#guide-open").click();
-  assert.equal(await page.locator("#guide-dialog").isVisible(), true);
-  await page.keyboard.press("Escape");
-  assert.equal(await page.locator("#guide-dialog").isVisible(), false);
   for (const width of [1280, 1024, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
-    await page.locator("[data-lab=projectile]").click();
-    await page.waitForTimeout(80);
-    assert.ok(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth <= innerWidth + 1,
-      ),
-      `mechanics overflow ${width}`,
-    );
-    if (width === 390) await page.evaluate(() => scrollTo(0, 0));
-    await page.waitForTimeout(80);
-    await page.screenshot({
-      path: out + "/mechanics-mobile.png",
-      fullPage: false,
-    });
-    for (const mode of ["audio", "measure"]) {
+    for (const mode of [
+      "acoustic",
+      "motion",
+      "mechanics",
+      "audio",
+      "measure",
+    ]) {
       await page.locator(`[data-mode=${mode}]`).click();
       await page.waitForTimeout(50);
       assert.ok(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth + 1,
         ),
-        `${mode} overflow ${width}`,
+        `${mode}: page overflow at ${width}`,
       );
+      if (mode === "acoustic" || mode === "motion") {
+        const selector =
+          mode === "acoustic"
+            ? ".acoustic-lab [data-ir]"
+            : ".motion-lab [data-position]";
+        assert.ok(
+          await page.locator(selector).evaluate((canvas) => {
+            const display = canvas.getBoundingClientRect();
+            return (
+              Math.abs(canvas.width / 2 - display.width) < 2 &&
+              display.height >= 190
+            );
+          }),
+          `${mode}: readable plots at ${width}`,
+        );
+      }
+    }
+    if (width === 390) {
+      await page.locator("[data-mode=acoustic]").click();
+      await page.evaluate(() => scrollTo(0, 0));
+      await page.screenshot({ path: `${out}/acoustic-mobile.png` });
     }
   }
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.locator("[data-lab=projectile]").click();
+  await page.locator("[data-mode=mechanics]").click();
   assert.equal(await page.locator("#play").innerText(), "Step");
-  await page.locator("#play").click();
-  assert.notEqual(await page.locator("#time").inputValue(), "0");
-  assert.deepEqual(errors, []);
-  assert.deepEqual(failed, []);
-  console.log(
-    "PASS real MP4 decode, manual video coordinates/calibration/metadata, preserved navigation and adapter history; integrated mechanics/presets/invalid-state/session roundtrip/quantity/sweep/analysis bridge/audio/CSV preservation/search/guide/320–1440 widths/reduced-motion; zero page errors or HTTP failures.",
-  );
-
-  const mic = await browser.newPage();
-  const micErrors = [];
-  mic.on("pageerror", (e) => micErrors.push(e.message));
-  await mic.addInitScript(() => {
-    window.captureMetrics = {
-      contexts: 0,
-      closed: 0,
-      stops: 0,
-      requests: 0,
-      tones: 0,
-    };
-    window.pendingMic = [];
-    class FakeAudio {
-      constructor() {
-        this.sampleRate = 48000;
-        this.currentTime = 0;
-        this.state = "running";
-        window.captureMetrics.contexts++;
-        this.destination = {};
-      }
-      async resume() {}
-      async close() {
-        if (this.state !== "closed") {
-          this.state = "closed";
-          window.captureMetrics.closed++;
-        }
-      }
-      createAnalyser() {
-        return {
-          fftSize: 2048,
-          getFloatTimeDomainData(a) {
-            for (let i = 0; i < a.length; i++)
-              a[i] = 0.2 * Math.sin((2 * Math.PI * 440 * i) / 48000);
-          },
-        };
-      }
-      createMediaStreamSource() {
-        return { connect() {}, disconnect() {} };
-      }
-      createOscillator() {
-        return {
-          frequency: { value: 0 },
-          connect(g) {
-            return g;
-          },
-          start() {
-            window.captureMetrics.tones++;
-          },
-          stop() {},
-          disconnect() {},
-        };
-      }
-      createGain() {
-        return {
-          gain: { setValueAtTime() {}, linearRampToValueAtTime() {} },
-          connect() {},
-        };
-      }
-    }
-    window.AudioContext = FakeAudio;
-    Object.defineProperty(navigator, "mediaDevices", {
-      value: {
-        getUserMedia() {
-          window.captureMetrics.requests++;
-          return new Promise((resolve, reject) =>
-            window.pendingMic.push({ resolve, reject }),
-          );
-        },
-      },
+  await page.locator("#guide-open").click();
+  assert.equal(await page.locator("#guide-dialog").isVisible(), true);
+  await page.keyboard.press("Escape");
+  // Actual AudioWorklet execution in an OfflineAudioContext, without physical capture/output.
+  const offline = await page.evaluate(async () => {
+    const { generateProtocol, analyzeProtocol } = await import(
+      "./acoustics.js"
+    );
+    const protocol = generateProtocol(16000),
+      ctx = new OfflineAudioContext(
+        1,
+        protocol.excitation.length + 1024,
+        16000,
+      );
+    await ctx.audioWorklet.addModule("./capture-worklet.js");
+    const processor = new AudioWorkletNode(ctx, "investigation-capture", {
+      numberOfInputs: 1,
+      numberOfOutputs: 1,
+      outputChannelCount: [1],
     });
-    window.resolveMic = () => {
-      const t = new EventTarget();
-      t.stop = () => window.captureMetrics.stops++;
-      t.getSettings = () => ({
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: true,
-        sampleRate: 48000,
-        deviceId: "MUST-NOT-EXPORT",
-      });
-      window.pendingMic
-        .shift()
-        .resolve({ getTracks: () => [t], getAudioTracks: () => [t] });
+    const buffer = ctx.createBuffer(1, protocol.excitation.length, 16000),
+      channel = buffer.getChannelData(0);
+    for (let i = 0; i < channel.length; i++)
+      channel[i] =
+        0.5 * protocol.excitation[i] +
+        (i >= 640 ? 0.2 * protocol.excitation[i - 640] : 0);
+    const input = ctx.createBufferSource();
+    input.buffer = buffer;
+    input.connect(processor);
+    processor.connect(ctx.destination);
+    const recorded = new Promise((resolve, reject) => {
+      processor.port.onmessage = (e) => {
+        if (e.data.type === "complete") resolve(e.data);
+      };
+      processor.onprocessorerror = () => reject(new Error("processor failed"));
+    });
+    processor.port.postMessage({
+      type: "start",
+      excitation: protocol.excitation,
+    });
+    input.start();
+    await ctx.startRendering();
+    const result = await recorded;
+    const analyzed = analyzeProtocol({
+      ...protocol,
+      response: result.response,
+      captureIntegrity: result.integrity,
+    });
+    return {
+      health: result.integrity,
+      error: analyzed.validation.nrmse,
+      accepted: analyzed.quality.usable,
+      baseline: analyzed.baseline.nrmse,
     };
   });
-  await mic.goto(base + "#audio");
-  await mic
-    .getByRole("heading", { name: "See sound take shape.", exact: true })
-    .waitFor();
-  assert.equal(await mic.evaluate(() => window.captureMetrics.requests), 0);
-  await mic
-    .getByRole("button", { name: "Connect microphone", exact: true })
-    .click();
-  await mic
-    .getByRole("button", { name: "Cancel microphone request", exact: true })
-    .click();
-  await mic.evaluate(() => window.resolveMic());
-  await mic.waitForTimeout(30);
-  assert.equal(await mic.evaluate(() => window.captureMetrics.stops), 1);
-  await mic
-    .getByRole("button", { name: "Connect microphone", exact: true })
-    .click();
-  await mic.evaluate(() => window.resolveMic());
-  await mic
-    .getByRole("heading", { name: "Live microphone", exact: true })
-    .waitFor();
-  await mic.waitForTimeout(150);
-  const micSave = mic.waitForEvent("download");
-  await mic
-    .getByRole("button", { name: "Save audio session", exact: true })
-    .click();
-  const capture = JSON.parse(
-    await readFile(await (await micSave).path(), "utf8"),
-  );
-  assert.equal(capture.metadata.originalSource, "microphone");
-  assert.equal(capture.metadata.microphone.autoGainControl, true);
-  assert.equal(JSON.stringify(capture).includes("MUST-NOT-EXPORT"), false);
-  await mic.locator("[data-lab=projectile]").click();
-  assert.equal(await mic.evaluate(() => window.captureMetrics.stops), 2);
-  assert.equal(await mic.evaluate(() => window.captureMetrics.closed), 1);
-  await mic.locator("[data-mode=audio]").click();
+  assert.equal(offline.health.missingInputFrames, 0);
+  assert.equal(offline.health.discontinuities, 0);
+  assert.ok(offline.error < 0.05);
+  assert.ok(offline.baseline > offline.error * 3);
+  assert.equal(offline.accepted, true);
+  // Permission pending/cancel and late media release use a controlled mock, no real microphone.
+  const permission = await context.newPage();
+  await permission.addInitScript(() => {
+    window.pending = [];
+    window.trackStops = 0;
+    Object.defineProperty(navigator, "mediaDevices", {
+      value: {
+        getUserMedia: () =>
+          new Promise((resolve) => window.pending.push(resolve)),
+      },
+    });
+    window.grantLate = () =>
+      window.pending.shift()({
+        getTracks: () => [
+          {
+            stop() {
+              window.trackStops++;
+            },
+          },
+        ],
+      });
+  });
+  await permission.goto(base);
+  await permission.locator("[data-verdict][data-verdict=pass]").waitFor();
+  await permission.locator("[data-capture-open]").click();
+  await permission.locator("[data-begin]").click();
+  await permission.locator("[data-cancel]").click();
+  await permission.evaluate(() => window.grantLate());
+  await permission.waitForFunction(() => window.trackStops === 1);
   assert.match(
-    await mic.locator("[data-source]").innerText(),
-    /Captured window replay/,
+    await permission.locator(".acoustic-lab [data-message]").innerText(),
+    /canceled/,
   );
-  await mic
-    .getByRole("button", { name: "Use simulation", exact: true })
-    .click();
-  await mic
-    .getByRole("button", { name: "Connect microphone", exact: true })
-    .click();
-  await mic.evaluate(() =>
-    window.pendingMic
-      .shift()
-      .reject(Object.assign(new Error("Denied"), { name: "NotAllowedError" })),
-  );
-  await mic.locator("[data-error]").waitFor({ state: "visible" });
-  assert.match(
-    await mic.locator("[data-error]").innerText(),
-    /permission was denied/,
-  );
-  assert.deepEqual(micErrors, []);
+  assert.deepEqual(errors, []);
+  assert.deepEqual(httpFailures, []);
   console.log(
-    "PASS integrated mocked microphone opt-in, canceled late stream, acquisition metadata, no device identifiers, navigation release and denied permission. Actual hardware not exercised.",
+    "PASS: canonical acoustic identification, nonlinear/silent rejection, fixed-score detail view, export/recompute, persistent run reload, independent repeated A/B records, generated pixels→NCC→2D inference, occlusion stop, correction/exclusion undo, source MP4/presented timestamps, retained mechanics, 320–1536 layouts, reduced motion, real offline AudioWorklet capture and canceled late permission stream.",
+  );
+  console.log("Offline AudioWorklet evidence:", JSON.stringify(offline));
+  await writeFile(
+    `${out}/browser-evidence.json`,
+    JSON.stringify(
+      { browser: browser.version(), offline, errors, httpFailures },
+      null,
+      2,
+    ),
   );
 } finally {
   await browser.close();
+  if (server) await new Promise((resolve) => server.close(resolve));
 }

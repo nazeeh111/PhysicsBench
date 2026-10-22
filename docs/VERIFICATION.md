@@ -1,55 +1,73 @@
 # Verification record
 
-Checked 21 October 2026 against the 0.2.0 source and its freshly built distribution. These checks establish the listed software behavior; they do not establish universal correctness, scientific accuracy on real devices, or cross-platform compatibility.
+Current investigation revision checked on 21 October 2026. Results below concern software behavior and controlled specimens; they do not establish physical device accuracy or universal compatibility.
 
-## Passed locally
+## Scientific checks
 
-| Check | Evidence and scope |
-| --- | --- |
-| `npm test` | **54/54** tests pass on Node.js 24.14.0/macOS. Includes the original 30 model/file tests, 8 regression tests, 11 audio tests, 4 sweep tests and 1 preview boundary test. |
-| `npm run build` | Thirteen allowlisted production assets built and hashed; production modules and local resource references validated. No production package dependency. |
-| Integrated browser | Playwright 1.62.1 with Chromium 151.0.7922.34 on macOS. Real built assets served by the loopback preview with the actual CSP. No page exceptions or failed HTTP requests during the checked workflows. |
-| Mechanics interactions | Presets; invalid input preserves valid experiment; exact time scrub; original v1 session download/import; plotted quantity selection; valid/invalid sweeps; simulation-to-analysis provenance. |
-| Measurement interactions | Valid two-column CSV import; malformed import retains data; switching instruments retains observations; model transfer into an existing workspace; saved dataset selection. |
-| Local video | Actual generated 640×360 MP4 decoded; four manually entered time/position points; pixel units before calibration; 0.01 m/source-pixel ruler calibration; exported physical units, raw coordinates and calibration metadata. This is a software fixture, not a physical motion measurement. |
-| Audio and device lifecycle | Simulation run/pause; displayed spectral history; separate mocked-media browser context confirms no automatic microphone request, canceled late streams stopped, requested capture starts, actual reported settings retained without device identifiers, navigation releases tracks/context, denial leaves a recovery path. |
-| Layout and motion | No document-level horizontal overflow at 320, 390, 768, 1024 and 1280 px in mechanics/audio/analysis. Desktop screenshots at 1440 px visually inspected. Reduced-motion mechanics uses Step. |
-| Keyboard/dialog workflow | Instrument search via native dialog, search result activation, focus target, field guide and Escape dismissal. Controls retain native labels/focus styling. This is not a full screen-reader audit. |
-| Independent review | Scientific math, data validation, acquisition lifecycle, distribution and integration reviewed separately. Found navigation discarding measurement work; fixed by retaining mounts and verified in the integrated browser test. No other material issue identified in that scoped review. |
+`npm test` passes **89 tests** on Node 24.14.0 locally:
 
-A separate audio-only mocked browser check exercised explicit reference-tone start/stop, audio capture roundtrip, malformed-file preservation, microphone pause and teardown. A bounded session-history adapter check exercised eight entries, no silent eviction, duplicate suppression, restore/removal and disposed cleanup. The committed integrated browser suite covers the primary end-to-end paths; the pure test suite covers capture metadata rejection and numeric fixtures.
+- 20 acoustic identification checks: independent time-domain convolution fixtures; unseen reflection/latency cases; simple baseline; held-out output mutation cannot alter fitted coefficients/alignment; shifted/attenuated probe rejection; noise and silence; nonlinear mismatch; complete late-tail scoring; canonical source verification; capture gaps; explicit band-limited pre-ringing.
+- 9 image-tracking/motion checks: lighting/noise/distractors, occlusion, ambiguous duplicate targets, bounded search, flat/boundary templates, pixel conversion, worst-case coefficient sensitivity and complete motion-record validation/roundtrips.
+- 2 actual processor-code VM checks: exact emitted/recorded samples and continuity metadata; missing input plus skipped render frames are recorded rather than hidden as silence.
+- 4 experiment-format/comparison checks: float32 byte roundtrips, size/schema rejection, matched repeated conditions and SHA-256 identity derived from raw recording bytes.
+- The previous 54 tests covering mechanics, bounded interchange, regression, signal analysis, sweep studies and preview boundaries.
 
-## Reproduce
+The dependency-free static build produces 21 allowlisted assets and a deterministic manifest. This count describes distribution scope, not scientific quality.
+
+## Integrated browser
+
+The committed browser runner serves the freshly verified distribution on an ephemeral loopback port. Playwright 1.62.1 / Chromium 151.0.7922.34 passed these workflows locally:
+
+- Canonical acoustic reference; nonlinear and silent controls rejected/withheld.
+- Waveform detail selection leaves the full held-out score unchanged.
+- Complete raw record export and reopen recompute analysis; invalid/missing acquisition identity preserves prior work.
+- IndexedDB persistence across reload, replacement of the same acquisition, four separate A/B acquisitions and matched comparison.
+- Generated Canvas pixels → NCC observations → x/y motion inference; 25 observations recover approximately −9.816 m/s² versus source truth −9.81. This is an image/software test, not a physical gravity measurement.
+- Straight-line model mismatch approximately 1.28 m versus ballistic mismatch 0.00803 m for that generated specimen. These are training-fit errors, not held-out motion prediction.
+- Occlusion stops tracking with a gap. Linked chart/time controls, point exclusion and undo preserve observations.
+- Actual local MP4 decode, presented-media timestamps and source attachment.
+- Retained mechanics presets/sweeps/model-to-data handoff, reduced-motion stepping and methods dialog.
+- No document horizontal overflow at 320, 390, 768, 1024 and 1280 px; desktop inspection at 1536 px. Scientific chart labels redraw at display size on resize, including high-density displays; chart selection retains the correct time coordinates. Current screenshots are under `docs/images/v3/`.
+- Real AudioWorklet execution in an OfflineAudioContext, using a controlled digital reflection path: full-model normalized prediction error about **0.00111 (0.11%)**, versus **0.3712 (37.1%)** for a trained delay-and-gain baseline. 55,200 samples retained; no missing inputs/render discontinuities. This exercises actual processor execution without microphone or speaker hardware.
+- Controlled pending-permission mock, cancellation and late-granted stream release. No physical microphone was recorded.
+
+The runner writes a small browser-evidence JSON beside screenshots. It asserts no browser page errors or failed HTTP assets in the checked workflows. Optional API/device failures outside these cases are not thereby proven correct.
+
+## Independent review
+
+A separate reviewer found four material weaknesses, all corrected and retested:
+
+1. Unexplained late output after finite model support escaped the score. Full retained probe-tail scoring with zero-extension now catches it.
+2. Missing input blocks and render-frame jumps were hidden by zeros. Processor metadata and rejecting quality flags now preserve those defects.
+3. A narrowband substitute could masquerade as the broadband protocol. Exact canonical float32 source verification now rejects it.
+4. Missing acquisition identity could relabel a replay as a new repetition. Bounded identity validation plus independently recomputed raw-record SHA-256 fingerprints prevent ordinary duplicate replay in comparisons.
+
+Review also prompted atomic source/result replacement across asynchronous hashing and a distinct estimator-version field. Reverification confirmed the four scientific/import fixes, captured metadata propagation and duplicate/level mismatch rejection. This was a scoped review, not an exhaustive security audit.
+
+## Reproduction
 
 ```sh
 npm test
 npm run build
-npm start
+npm run benchmark
 ```
 
-In a second terminal, with Playwright available:
+Optional browser tooling, separate from production:
 
 ```sh
-# Optional test tooling only. The application does not need these packages.
 npm install --no-save --package-lock=false --ignore-scripts playwright@1.62.1
 npx --no-install playwright install chromium
 npm run test:browser
 ```
 
-If an installed Playwright module should be reused, set `PLAYWRIGHT_MODULE` to its absolute `index.mjs` path instead of installing it. `BENCH_URL` defaults to `http://127.0.0.1:4173/`. `BROWSER_ARTIFACT_DIR` defaults to ignored `.browser-artifacts/`; setting it to `docs/images` regenerates README screenshots. The fixture is committed under `test-fixtures/`.
+Or reuse an installed Playwright module via `PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs`. `BENCH_URL` optionally targets an already running local preview; unset it to test the runner's own freshly verified ephemeral server. `BROWSER_ARTIFACT_DIR` defaults to ignored `.browser-artifacts/`; use `docs/images/v3` to regenerate presentation screenshots.
 
-The existing GitHub workflow runs numerical tests/build on Node 22 and 24; its Node 24 check now installs isolated Playwright tooling and runs the browser suite before Pages publishing is eligible. Local checks do not by themselves prove a GitHub run passed; inspect the pull request's current checks for that status.
+`npm run benchmark` measured about 37 ms warmed median at 48 kHz on the current Node/macOS host in one local run. Browser messaging, hashing/encoding, worker startup and other devices are excluded; rerun rather than treating this as a portable performance guarantee.
 
-## Confirmed GitHub run
+GitHub's Node 22/24 and Ubuntu Chromium checks are configured in the workflow. Inspect the PR's current checks for the final revision; the prior v0.2 successful run does not validate this new code.
 
-[Run 39693305964](https://github.com/nazeeh111/PhysicsBench/actions/runs/39693305964) passed on runtime source commit `925288b716aecd9246d502e6cebc8b9d149e009b`: all 54 tests and the 13-asset build on Node 22 and 24, plus the complete Chromium 151.0.7922.34 browser suite on Ubuntu. The log confirms real MP4 decoding, manual calibration/metadata export, preserved navigation and mocked microphone lifecycle checks executed successfully. Pages build/deploy jobs were skipped because this is an unmerged pull request. This documentation update adds the observed CI result without changing runtime source.
+## Unverified limits
 
-## Not established
+Physical speaker/microphone accuracy and acoustic calibration; physical camera measurement validation; Firefox/Safari execution; Windows/ChromeOS physical hardware; full assistive-technology conformance; exhaustive security/performance behavior; scientific novelty or a measured tenfold advantage over competing tools.
 
-- Real microphone capture accuracy, acoustic calibration, or scientific agreement with a laboratory reference.
-- Firefox/WebKit execution, Windows/ChromeOS browser runs or physical device accuracy. Firefox/WebKit were not installed locally. Ubuntu headless Chromium is covered by the GitHub run above; that does not establish every Linux distribution, browser or hardware setup.
-- Guaranteed frame-accurate video decoding, automatic object tracking, or correction for camera perspective/motion.
-- Full assistive-technology conformance, an exhaustive security audit, or a measured tenfold improvement.
-- Persistence across reload/close. Export important work; page memory and session history are deliberately temporary.
-
-Research documents distinguish implemented features from prospective extensions. No real participant data or private media was used in these checks.
+The application provides explicit reference specimens and optional physical acquisition paths. It does not fabricate real hardware evidence when access or validation is unavailable.
