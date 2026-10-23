@@ -1837,13 +1837,15 @@ export function mountMotion(container, options = {}) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
+    const ticket = ++sourceLoad;
     try {
       if (file.size > 2 * 1024 ** 2)
         throw new Error("Investigation JSON must be at most 2 MiB.");
       const parsed = JSON.parse(await file.text());
+      if (disposed || ticket !== sourceLoad) return;
       loadRun(parsed);
     } catch (e) {
-      error(e.message);
+      if (!disposed && ticket === sourceLoad) error(e.message);
     }
   });
   document.addEventListener(
