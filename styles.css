@@ -2113,3 +2113,15 @@ body[data-lab="collision"] .measurements dl > div:nth-child(2) {
     display: none;
   }
 }
+
+/* Evidence precedes detail in the document and stays in reach on narrow screens. */
+.acoustic-workspace > .evidence-card { grid-column: 2; grid-row: 1; }
+.acoustic-main { grid-column: 1; grid-row: 1 / span 2; }
+.acoustic-inspector { grid-column: 2; grid-row: 2; }
+.specimen-jump { display: inline-block; grid-column: 1 / -1; margin-top: 10px; color: var(--accent); font-size: 12px; text-underline-offset: 3px; }
+#acoustic-specimen, #acoustic-verdict { scroll-margin-top: 24px; }
+@media (max-width: 720px) {
+  .acoustic-workspace > .evidence-card { grid-column: 1; grid-row: 1; }
+  .acoustic-main { grid-column: 1; grid-row: 2; }
+  .acoustic-inspector { grid-column: 1; grid-row: 3; }
+}
