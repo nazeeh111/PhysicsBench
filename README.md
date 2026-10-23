@@ -6,8 +6,6 @@ PhysicsBench runs complete scientific investigations locally in the browser: rec
 
 [Try the lab](https://nazeeh111.github.io/PhysicsBench/) · [Methods](docs/INVESTIGATIONS.md) · [Evidence](docs/VERIFICATION.md) · [Research and alternatives](docs/RESEARCH-V2.md)
 
-**Review build:** these investigations are on `feat/laptop-science-workbench` in [PR #1](https://github.com/nazeeh111/PhysicsBench/pull/1). GitHub Pages follows `main` and shows the previous version until merge. Use the branch command below to run this build.
-
 ![Acoustic investigation: recovered response, independent prediction and its error against a simpler baseline](docs/images/v3/acoustic-investigation.png)
 
 ## Mechanics you can verify
@@ -74,7 +72,7 @@ The original projectile, mass–spring and collision models remain in **Mechanic
 Node.js 22+; no production dependencies or package installation needed:
 
 ```sh
-git clone --branch feat/laptop-science-workbench --single-branch https://github.com/nazeeh111/PhysicsBench.git
+git clone https://github.com/nazeeh111/PhysicsBench.git
 cd PhysicsBench
 npm test
 npm run build
