@@ -1,10 +1,10 @@
 import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
-import {resolve,extname} from 'node:path';
+import {resolve,extname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const directory=process.argv[2] ? resolve(process.argv[2]) : fileURLToPath(new URL('..',import.meta.url));
+const directory=resolve(process.argv[2] ?? fileURLToPath(new URL('..',import.meta.url)));
 const server=createServer(async(req,res)=>{
   try {
     if(req.url==='/') {
@@ -13,7 +13,7 @@ const server=createServer(async(req,res)=>{
       return;
     }
     const target=resolve(directory,'.'+req.url);
-    if(!target.startsWith(directory+'/')) throw Error('bad path');
+    if(!target.startsWith(directory+sep)) throw Error('bad path');
     res.setHeader('Content-Type',extname(target)==='.js'?'text/javascript':'text/plain');
     res.end(await readFile(target));
   } catch {res.writeHead(404);res.end();}
