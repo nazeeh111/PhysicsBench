@@ -102,7 +102,7 @@ The static build uses relative URLs, an explicit asset allowlist and a SHA-256 m
 
 ## Why this project exists
 
-The interesting work is connecting **source → assumptions → model → a discriminating test → a replayable record**. Browser spectra, sweep/IR measurement and video tracking already exist. [The research](docs/RESEARCH-V2.md) compares close browser precedents and stronger conventional tools, including REW, Open Sound Meter, Friture, Tracker, TrackLab and CODAP. This project does not claim to invent those techniques or outperform those tools broadly.
+The project connects **source → assumptions → model → a discriminating test → a replayable record** using established acoustic measurement, regression and video-tracking techniques. [The research](docs/RESEARCH-V2.md) compares existing tools and explains the scope of these investigations.
 
 The implementation separates pure numerical methods, acquisition and interaction:
 
