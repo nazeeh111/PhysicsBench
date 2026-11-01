@@ -1,24 +1,14 @@
 # PhysicsBench
 
-**A model should survive a measurement it did not fit.**
+**Test acoustic and motion models against recorded observations.**
 
-PhysicsBench runs complete scientific investigations locally in the browser: recover an acoustic signal path and test it against an independent sound, or track an object from pixels and ask which motion model explains it. Raw observations, assumptions, corrections and analysis settings travel together in reopenable experiment records.
+Identify a sound path with one signal and challenge it with another, or track an object from pixels and compare motion models. Save the raw observations, assumptions and analysis in a record you can reopen locally in the browser.
 
 [Try the lab](https://nazeeh111.github.io/PhysicsBench/) · [Methods](docs/INVESTIGATIONS.md) · [Evidence](docs/VERIFICATION.md) · [Research and alternatives](docs/RESEARCH-V2.md)
 
 ![Acoustic investigation: recovered response, independent prediction and its error against a simpler baseline](docs/images/v3/acoustic-investigation.png)
 
-## Mechanics you can verify
-
-The original projectile, mass–spring and collision labs remain available alongside the new investigations. For a concrete collision check, set restitution to `0.4`, select **Apply & reset**, and scrub to `1.8 s`: contact occurs at `1.333 s`, the outgoing velocities are `1.6` and `2.8 m/s`, momentum stays at `6 kg·m/s`, and kinetic energy falls from `9` to `6.48 J`.
-
-[![The collision lab paused at 1.8 seconds, showing the two bodies, the 0.4 restitution input, a contact mark on the time slider, and momentum and energy readings.](docs/collision-after-contact-v2.png)](https://nazeeh111.github.io/PhysicsBench/)
-
-*Current-source browser capture of that experiment. The blue and magenta marks identify body 1 and body 2 across the scene, readings and plot.*
-
-[![Velocity over time for the same collision. A magenta dashed line marks contact at 1.333 seconds and a dark solid line marks the selected 1.8-second state.](docs/collision-time-trace.png)](https://nazeeh111.github.io/PhysicsBench/)
-
-*The two velocity traces change at contact. The separate cursor shows which instant the scene and measurements display.*
+Start with a virtual acoustic trial or the generated motion specimen. Both run without microphone permission. For local video or real sound capture, the [evidence table](#evidence-you-can-reproduce) explains acquisition requirements and remaining validation.
 
 ## Two investigations with consequences
 
@@ -56,6 +46,18 @@ The opening specimen is generated image data with known truth. Observations are 
 ![Tracking stops at an occlusion and retains a visible unresolved gap](docs/images/v3/tracking-failure.png)
 
 </details>
+
+## Mechanics you can verify
+
+The original projectile, mass–spring and collision labs remain available alongside the new investigations. For a concrete collision check, set restitution to `0.4`, select **Apply & reset**, and scrub to `1.8 s`: contact occurs at `1.333 s`, the outgoing velocities are `1.6` and `2.8 m/s`, momentum stays at `6 kg·m/s`, and kinetic energy falls from `9` to `6.48 J`.
+
+[![The collision lab paused at 1.8 seconds, showing the two bodies, the 0.4 restitution input, a contact mark on the time slider, and momentum and energy readings.](docs/collision-after-contact-v2.png)](https://nazeeh111.github.io/PhysicsBench/)
+
+*Current-source browser capture of that experiment. The blue and magenta marks identify body 1 and body 2 across the scene, readings and plot.*
+
+[![Velocity over time for the same collision. A magenta dashed line marks contact at 1.333 seconds and a dark solid line marks the selected 1.8-second state.](docs/collision-time-trace.png)](https://nazeeh111.github.io/PhysicsBench/)
+
+*The two velocity traces change at contact. The separate cursor shows which instant the scene and measurements display.*
 
 ## An experiment record, not a screenshot
 
